@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chat2chart — UX Design Directions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --primary: #2563EB;
+    --primary-soft: #DBEAFE;
+    --primary-foreground: #FFFFFF;
+    --background: #FAFAFA;
+    --foreground: #18181B;
+    --muted: #F4F4F5;
+    --muted-foreground: #71717A;
+    --border: #E4E4E7;
+    --card: #FFFFFF;
+    --accent: #0D9488;
+    --accent-soft: #CCFBF1;
+    --accent-foreground: #134E4A;
+    --success: #16A34A;
+    --success-soft: #DCFCE7;
+    --warning: #D97706;
+    --warning-soft: #FEF3C7;
+    --destructive: #DC2626;
+    --destructive-soft: #FEE2E2;
+    --summary: #F5F3FF;
+    --summary-border: #C4B5FD;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--foreground);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Navigation Bar ── */
+  .nav-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #18181B;
+    border-bottom: 1px solid #27272A;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    height: 52px;
+    gap: 16px;
+    overflow-x: auto;
+  }
+  .nav-title {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .nav-buttons {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    border: 1px solid #3F3F46;
+    background: transparent;
+    color: #A1A1AA;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 5px 14px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover {
+    border-color: #71717A;
+    color: #D4D4D8;
+  }
+  .nav-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #FFFFFF;
+  }
+
+  /* ── Sections ── */
+  .screen-section {
+    display: none;
+    padding-top: 52px;
+    min-height: 100vh;
+  }
+  .screen-section.active { display: block; }
+
+  /* ── Shared button styles ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    padding: 12px 24px;
+  }
+  .btn-primary { background: var(--primary); color: #FFFFFF; }
+  .btn-primary:hover { background: #1D4ED8; }
+  .btn-success { background: var(--success); color: #FFFFFF; }
+  .btn-success:hover { background: #15803D; }
+  .btn-outline { background: #FFFFFF; color: var(--foreground); border: 1.5px solid var(--border); }
+  .btn-outline:hover { border-color: #A1A1AA; }
+  .btn-dark { background: var(--foreground); color: #FFFFFF; }
+  .btn-dark:hover { background: #27272A; }
+  .btn-secondary { background: var(--muted); color: var(--foreground); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-full { width: 100%; }
+
+  /* ═══════════════════════════════════════
+     1. CONSENT SCREEN
+     ═══════════════════════════════════════ */
+  .consent-screen {
+    background: linear-gradient(180deg, var(--primary-soft), var(--background));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .consent-card {
+    background: #FFFFFF;
+    max-width: 560px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 40px 36px;
+    text-align: center;
+  }
+  .consent-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 26px;
+  }
+  .consent-card h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .consent-card .subtitle {
+    font-size: 15px;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    color: var(--foreground);
+  }
+  .info-block {
+    background: var(--muted);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--foreground);
+  }
+  .info-block .info-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .consent-duration {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    margin: 20px 0 24px;
+  }
+  .consent-card .btn { font-size: 16px; padding: 14px; }
+
+  /* ═══════════════════════════════════════
+     2. VOICE INTERVIEW
+     ═══════════════════════════════════════ */
+  .interview-screen {
+    background: var(--background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .conversation-thread {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 24px 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .msg { max-width: 75%; border-radius: var(--radius-md); padding: 14px 18px; font-size: 15px; line-height: 1.55; }
+  .msg-agent { background: var(--primary-soft); color: var(--foreground); align-self: flex-start; }
+  .msg-user {
+    background: #FFFFFF;
+    border: 1.5px solid var(--border);
+    align-self: flex-end;
+    position: relative;
+  }
+  .msg-user .timestamp {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-top: 8px;
+  }
+  .msg-summary {
+    background: var(--summary);
+    border: 1.5px solid var(--summary-border);
+    align-self: flex-start;
+    max-width: 80%;
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+  }
+  .summary-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #7C3AED;
+    margin-bottom: 8px;
+    letter-spacing: 0.03em;
+  }
+  .summary-label .icon { font-size: 14px; }
+  .summary-text { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--foreground); }
+  .summary-confirmed {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--success);
+  }
+  .msg-listening {
+    background: var(--success-soft);
+    border: 1.5px solid var(--success);
+    align-self: flex-end;
+    max-width: 75%;
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+  }
+  .listening-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 14px;
+  }
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulseDot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+    margin-bottom: 10px;
+  }
+  .waveform .bar {
+    width: 4px;
+    border-radius: 2px;
+    background: var(--success);
+  }
+  .waveform .bar:nth-child(1) { animation: wave1 0.8s ease-in-out infinite; }
+  .waveform .bar:nth-child(2) { animation: wave2 0.8s ease-in-out infinite 0.1s; }
+  .waveform .bar:nth-child(3) { animation: wave3 0.8s ease-in-out infinite 0.2s; }
+  .waveform .bar:nth-child(4) { animation: wave1 0.8s ease-in-out infinite 0.15s; }
+  .waveform .bar:nth-child(5) { animation: wave2 0.8s ease-in-out infinite 0.25s; }
+  .waveform .bar:nth-child(6) { animation: wave3 0.8s ease-in-out infinite 0.05s; }
+  .waveform .bar:nth-child(7) { animation: wave1 0.8s ease-in-out infinite 0.3s; }
+  .waveform .bar:nth-child(8) { animation: wave2 0.8s ease-in-out infinite 0.12s; }
+  @keyframes wave1 { 0%,100% { height: 8px; } 50% { height: 28px; } }
+  @keyframes wave2 { 0%,100% { height: 14px; } 50% { height: 22px; } }
+  @keyframes wave3 { 0%,100% { height: 20px; } 50% { height: 10px; } }
+  .listening-note {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+
+  /* Mic Bar */
+  .mic-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-top: 1px solid var(--border);
+    padding: 16px 0;
+    z-index: 100;
+  }
+  .mic-bar-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+  }
+  .mic-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--success);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .mic-button::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--success);
+    animation: pulseRing 1.5s ease-out infinite;
+  }
+  @keyframes pulseRing {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  .mic-button svg { width: 22px; height: 22px; fill: #FFFFFF; }
+  .mic-status { font-size: 15px; font-weight: 600; color: var(--success); }
+  .mic-done-btn {
+    background: var(--foreground);
+    color: #FFFFFF;
+    border: none;
+    padding: 10px 24px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+  .mic-done-btn:hover { background: #27272A; }
+  .mic-type-link {
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--primary);
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ═══════════════════════════════════════
+     3. DIAGRAM REVEAL
+     ═══════════════════════════════════════ */
+  .diagram-screen {
+    background: var(--background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+  .diagram-agent-msg {
+    background: var(--primary-soft);
+    max-width: 600px;
+    width: 100%;
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 15px;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    color: var(--foreground);
+  }
+  .diagram-canvas {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 32px;
+    max-width: 700px;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+  .flowchart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .flow-node {
+    padding: 12px 28px;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 220px;
+    color: var(--foreground);
+  }
+  .flow-node-step {
+    background: var(--primary-soft);
+    border: 1.5px solid var(--primary);
+  }
+  .flow-node-decision {
+    background: var(--warning-soft);
+    border: 1.5px solid var(--warning);
+    border-radius: 4px;
+    transform: rotate(0deg);
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--muted-foreground);
+    line-height: 1;
+    padding: 4px 0;
+  }
+  .flow-branch-labels {
+    display: flex;
+    gap: 60px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    padding: 2px 0;
+  }
+  .diagram-actions {
+    display: flex;
+    gap: 12px;
+    max-width: 700px;
+    width: 100%;
+  }
+  .diagram-actions .btn { flex: 1; }
+
+  /* ═══════════════════════════════════════
+     4. READ-ONLY VIEW
+     ═══════════════════════════════════════ */
+  .readonly-screen {
+    background: var(--background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+  .readonly-inner { max-width: 700px; width: 100%; }
+  .completion-header {
+    background: var(--success-soft);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 32px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #14532D;
+  }
+  .completion-header .check-icon { font-size: 22px; flex-shrink: 0; }
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    margin-bottom: 14px;
+    letter-spacing: 0.04em;
+  }
+  .summary-stack { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .summary-card-ro {
+    background: var(--summary);
+    border: 1px solid var(--summary-border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--foreground);
+  }
+  .readonly-diagram-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 32px;
+  }
+
+  /* ═══════════════════════════════════════
+     5. ERROR STATES
+     ═══════════════════════════════════════ */
+  .errors-screen {
+    background: var(--background);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .error-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 40px 36px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+  }
+  .error-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 26px;
+  }
+  .error-icon-red { background: var(--destructive-soft); color: var(--destructive); }
+  .error-icon-amber { background: var(--warning-soft); color: var(--warning); }
+  .error-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .error-card p { font-size: 15px; line-height: 1.55; color: var(--foreground); }
+
+  /* ═══════════════════════════════════════
+     6. SIGN-IN
+     ═══════════════════════════════════════ */
+  .signin-screen {
+    background: linear-gradient(180deg, var(--primary-soft), var(--background));
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .signin-card {
+    background: #FFFFFF;
+    max-width: 440px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 40px;
+  }
+  .signin-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--primary), #1E40AF);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .signin-brand-name { font-size: 20px; font-weight: 700; }
+  .signin-subtitle {
+    font-size: 15px;
+    color: var(--muted-foreground);
+    margin-bottom: 28px;
+  }
+  .form-field {
+    margin-bottom: 14px;
+  }
+  .form-field input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--foreground);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-field input::placeholder { color: #A1A1AA; }
+  .form-field input:focus { border-color: var(--primary); }
+  .form-helper {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  /* ═══════════════════════════════════════
+     7. SUPERVISOR CAROUSEL
+     ═══════════════════════════════════════ */
+  .sup-topbar {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+  .sup-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .sup-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .sup-project {
+    color: var(--muted-foreground);
+    font-size: 14px;
+    border-left: 1.5px solid var(--border);
+    padding-left: 14px;
+  }
+  .sup-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .sup-username { font-size: 14px; font-weight: 500; }
+
+  .carousel-screen {
+    background: var(--background);
+    min-height: 100vh;
+  }
+  .carousel-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  .carousel-nav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .carousel-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--foreground);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .carousel-arrow:hover { border-color: #A1A1AA; }
+  .carousel-info { flex: 1; }
+  .carousel-name { font-size: 16px; font-weight: 600; }
+  .carousel-meta { font-size: 13px; color: var(--muted-foreground); margin-top: 2px; }
+  .carousel-counter { font-size: 13px; color: var(--muted-foreground); font-weight: 500; white-space: nowrap; }
+
+  .carousel-diagram-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .carousel-actions { display: flex; gap: 12px; }
+  .carousel-actions .btn { font-size: 14px; padding: 10px 20px; }
+
+  /* ═══════════════════════════════════════
+     8. SPLIT-SCREEN COMPARISON
+     ═══════════════════════════════════════ */
+  .comparison-screen {
+    background: var(--background);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 55fr 45fr;
+    flex: 1;
+    min-height: calc(100vh - 52px - 56px - 52px);
+  }
+  .panel {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .panel-left { border-right: 1px solid var(--border); }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    letter-spacing: 0.04em;
+    margin-bottom: 16px;
+  }
+  .panel-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+  }
+
+  /* Synthesis nodes */
+  .synth-node {
+    position: relative;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 200px;
+    color: var(--foreground);
+    transition: box-shadow 0.2s;
+  }
+  .synth-common {
+    background: var(--primary-soft);
+    border: 1.5px solid var(--primary);
+  }
+  .synth-divergent {
+    background: var(--accent-soft);
+    border: 1.5px solid var(--accent);
+    color: var(--accent-foreground);
+    cursor: pointer;
+  }
+  .synth-divergent:hover {
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.3);
+  }
+  .synth-highlighted {
+    box-shadow: 0 0 0 3px var(--primary);
+  }
+  .divergence-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  /* Right panel compact carousel */
+  .compact-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .compact-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--foreground);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .compact-arrow:hover { border-color: #A1A1AA; }
+  .compact-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .compact-counter { font-size: 12px; color: var(--muted-foreground); font-weight: 500; white-space: nowrap; }
+
+  .highlighted-node {
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(13,148,136,0.25);
+  }
+
+  /* Comparison bottom bar */
+  .comparison-bottombar {
+    background: #FFFFFF;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* ── Utility ── */
+  b, strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ██ Navigation Bar ██ -->
+<nav class="nav-bar">
+  <span class="nav-title">chat2chart — UX Directions</span>
+  <div class="nav-buttons">
+    <button class="nav-btn active" data-target="consent">Consent</button>
+    <button class="nav-btn" data-target="interview">Interview</button>
+    <button class="nav-btn" data-target="diagram">Diagram</button>
+    <button class="nav-btn" data-target="readonly">Read-Only</button>
+    <button class="nav-btn" data-target="errors">Errors</button>
+    <button class="nav-btn" data-target="signin">Sign In</button>
+    <button class="nav-btn" data-target="carousel">Carousel</button>
+    <button class="nav-btn" data-target="comparison">Comparison</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     1. CONSENT SCREEN
+     ═══════════════════════════════════════════════════ -->
+<section id="consent" class="screen-section active">
+  <div class="consent-screen">
+    <div class="consent-card">
+      <div class="consent-icon">💬</div>
+      <h1>Welcome</h1>
+      <p class="subtitle">You've been invited to describe how you handle <strong>Receive and Digitize Incoming Mail</strong></p>
+
+      <div class="info-block">
+        <span class="info-icon">🎙️</span>
+        <span>You'll have a <strong>conversation with an AI assistant</strong> that will ask about your process</span>
+      </div>
+      <div class="info-block">
+        <span class="info-icon">📝</span>
+        <span>Your speech will be <strong>captured and processed by AI</strong> to create a visual workflow</span>
+      </div>
+      <div class="info-block">
+        <span class="info-icon">📋</span>
+        <span>Your responses will be <strong>recorded and attributed to you</strong> as part of this discovery project</span>
+      </div>
+
+      <p class="consent-duration">This usually takes about <strong>90 seconds</strong></p>
+      <button class="btn btn-primary btn-full">Begin Interview</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     2. VOICE INTERVIEW
+     ═══════════════════════════════════════════════════ -->
+<section id="interview" class="screen-section">
+  <div class="interview-screen">
+    <div class="conversation-thread">
+      <!-- Agent message 1 -->
+      <div class="msg msg-agent">Hi Janet! I'm here to learn about how you handle incoming taxpayer correspondence at the Ogden Service Center. Can you walk me through what happens when the mail first arrives?</div>
+
+      <!-- User speech 1 -->
+      <div class="msg msg-user">
+        Yeah so when the mail comes in, it's usually sorted by the mailroom already into big bins by general category. We grab a bin and start going through it piece by piece. First thing I do is check if the envelope has any special markings like certified or registered.
+        <div class="timestamp">10:02 AM</div>
+      </div>
+
+      <!-- Reflective summary -->
+      <div class="msg-summary">
+        <div class="summary-label">
+          <span class="icon">💬</span>
+          REFLECTIVE SUMMARY
+        </div>
+        <div class="summary-text">Let me make sure I have this right — when mail arrives at Ogden, it's been pre-sorted by the mailroom into category bins. You then process piece by piece, starting by checking each envelope for special handling markings like certified or registered mail.</div>
+        <div class="summary-confirmed">✅ Confirmed</div>
+      </div>
+
+      <!-- Agent message 2 -->
+      <div class="msg msg-agent">Great. Once you've checked for special markings, what's your next step? How do you handle scanning and getting these into the digital system?</div>
+
+      <!-- Active listening state -->
+      <div class="msg-listening">
+        <div class="listening-header">
+          <span class="pulse-dot"></span>
+          I'm hearing you...
+        </div>
+        <div class="waveform">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+        <div class="listening-note">No text shown during recording — your words appear after you click Done</div>
+      </div>
+    </div>
+
+    <!-- Mic bar -->
+    <div class="mic-bar">
+      <div class="mic-bar-inner">
+        <button class="mic-button">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+        <span class="mic-status">Recording...</span>
+        <button class="mic-done-btn">Done</button>
+        <span class="mic-type-link">Prefer to type?</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     3. DIAGRAM REVEAL
+     ═══════════════════════════════════════════════════ -->
+<section id="diagram" class="screen-section">
+  <div class="diagram-screen">
+    <div class="diagram-agent-msg">Here's what I captured from our conversation — take a look at your process:</div>
+
+    <div class="diagram-canvas">
+      <div class="flowchart">
+        <div class="flow-node flow-node-step">Receive Mail from Mailroom</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Check for Special Markings</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-decision">Certified / Registered?</div>
+        <div class="flow-branch-labels"><span>Yes</span><span>No</span></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Scan Documents</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Manual Classification</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Enter Data into System</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-decision">Spot-Check Quality?</div>
+        <div class="flow-branch-labels"><span>Yes</span><span>No</span></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Verify Against Original</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node flow-node-step">Route to Processing Queue</div>
+      </div>
+    </div>
+
+    <div class="diagram-actions">
+      <button class="btn btn-success">Yes, that looks right</button>
+      <button class="btn btn-outline">Something's not quite right</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     4. READ-ONLY COMPLETED VIEW
+     ═══════════════════════════════════════════════════ -->
+<section id="readonly" class="screen-section">
+  <div class="readonly-screen">
+    <div class="readonly-inner">
+      <div class="completion-header">
+        <span class="check-icon">✅</span>
+        <span>Your interview for <strong>Receive and Digitize Incoming Mail</strong> is complete. Thank you for sharing your expertise.</span>
+      </div>
+
+      <div class="section-label">WHAT WE CAPTURED</div>
+      <div class="summary-stack">
+        <div class="summary-card-ro">When mail arrives at Ogden, it's been pre-sorted by the mailroom into category bins. You process piece by piece, checking each envelope for special handling markings like certified or registered mail.</div>
+        <div class="summary-card-ro">After checking markings, you scan all documents before classifying them. You use manual classification rather than the system's auto-detect, preferring to verify form types yourself.</div>
+        <div class="summary-card-ro">After data entry, you perform a spot-check quality step — verifying 1 in 5 entries against the original physical document before marking them complete and routing to the processing queue.</div>
+      </div>
+
+      <div class="section-label">YOUR PROCESS DIAGRAM</div>
+      <div class="readonly-diagram-card">
+        <div class="flowchart">
+          <div class="flow-node flow-node-step">Receive Mail from Mailroom</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Check for Special Markings</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-decision">Certified / Registered?</div>
+          <div class="flow-branch-labels"><span>Yes</span><span>No</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Scan Documents</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Manual Classification</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Enter Data into System</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-decision">Spot-Check Quality?</div>
+          <div class="flow-branch-labels"><span>Yes</span><span>No</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Verify Against Original</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Route to Processing Queue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     5. ERROR STATES
+     ═══════════════════════════════════════════════════ -->
+<section id="errors" class="screen-section">
+  <div class="errors-screen">
+    <div class="error-card">
+      <div class="error-icon error-icon-red">🔗</div>
+      <h2>This link isn't valid</h2>
+      <p>Contact the person who sent it to you to get a new link.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-icon error-icon-amber">📱</div>
+      <h2>This experience requires a larger screen</h2>
+      <p>Please open this link on a tablet or desktop computer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     6. SIGN-IN
+     ═══════════════════════════════════════════════════ -->
+<section id="signin" class="screen-section">
+  <div class="signin-screen">
+    <div class="signin-card">
+      <div class="signin-brand">
+        <div class="brand-icon">c2c</div>
+        <span class="signin-brand-name">chat2chart</span>
+      </div>
+      <p class="signin-subtitle">Sign in to review</p>
+
+      <div class="form-field">
+        <input type="email" placeholder="your.email@agency.gov">
+      </div>
+      <div class="form-field">
+        <input type="password" placeholder="Project password">
+      </div>
+      <p class="form-helper">This is a project-specific password created for chat2chart. It is not your company password.</p>
+      <button class="btn btn-primary btn-full">Sign In</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     7. SUPERVISOR CAROUSEL
+     ═══════════════════════════════════════════════════ -->
+<section id="carousel" class="screen-section">
+  <div class="carousel-screen">
+    <div class="sup-topbar">
+      <div class="sup-topbar-left">
+        <div class="sup-brand">
+          <div class="brand-icon">c2c</div>
+          chat2chart
+        </div>
+        <span class="sup-project">IRS Taxpayer Document Processing</span>
+      </div>
+      <div class="sup-topbar-right">
+        <div class="avatar-circle">LK</div>
+        <span class="sup-username">Linda Kim</span>
+      </div>
+    </div>
+
+    <div class="carousel-container">
+      <div class="carousel-nav">
+        <button class="carousel-arrow">&#8592;</button>
+        <div class="carousel-info">
+          <div class="carousel-name">Rachel Torres — Austin, TX Service Center</div>
+          <div class="carousel-meta">Validated Apr 5, 2026 · 6 steps</div>
+        </div>
+        <button class="carousel-arrow">&#8594;</button>
+        <span class="carousel-counter">1 of 3</span>
+      </div>
+
+      <div class="carousel-diagram-card">
+        <div class="flowchart">
+          <div class="flow-node flow-node-step">Receive Mail from Mailroom</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Pre-Sort by Form Type</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Batch Similar Forms</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Scan Batch</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Manual Classification</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Enter Data into System</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-node-step">Route to Processing Queue</div>
+        </div>
+      </div>
+
+      <div class="carousel-actions">
+        <button class="btn btn-primary">Compare with Synthesis</button>
+        <button class="btn btn-outline">View Interview Details</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     8. SPLIT-SCREEN COMPARISON
+     ═══════════════════════════════════════════════════ -->
+<section id="comparison" class="screen-section">
+  <div class="comparison-screen">
+    <div class="sup-topbar">
+      <div class="sup-topbar-left">
+        <div class="sup-brand">
+          <div class="brand-icon">c2c</div>
+          chat2chart
+        </div>
+        <span class="sup-project">IRS Taxpayer Document Processing</span>
+      </div>
+      <div class="sup-topbar-right">
+        <div class="avatar-circle">LK</div>
+        <span class="sup-username">Linda Kim</span>
+      </div>
+    </div>
+
+    <div class="comparison-grid">
+      <!-- LEFT: Synthesis -->
+      <div class="panel panel-left">
+        <div class="panel-title">SYNTHESIZED WORKFLOW</div>
+        <div class="panel-card">
+          <div class="flowchart">
+            <div class="synth-node synth-common">1. Receive Mail</div>
+            <div class="flow-arrow">↓</div>
+            <div class="synth-node synth-divergent" title="Click to see timing difference">
+              2. Sort / Classify
+              <span class="divergence-badge">Divergence</span>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="synth-node synth-common">3. Scan Documents</div>
+            <div class="flow-arrow">↓</div>
+            <div class="synth-node synth-common">4. Enter Data</div>
+            <div class="flow-arrow">↓</div>
+            <div class="synth-node synth-divergent synth-highlighted" title="Click to navigate to Janet's diagram">
+              5. Verify / QC
+              <span class="divergence-badge">Divergence</span>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="synth-node synth-common">6. Route to Queue</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Individual compact carousel -->
+      <div class="panel">
+        <div class="compact-nav">
+          <button class="compact-arrow">&#8592;</button>
+          <span class="compact-name">Janet Park — Ogden, UT</span>
+          <button class="compact-arrow">&#8594;</button>
+          <span class="compact-counter">3 of 3</span>
+        </div>
+        <div class="panel-card">
+          <div class="flowchart">
+            <div class="flow-node flow-node-step">Receive Mail from Mailroom</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step">Check for Special Markings</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step">Scan Documents</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step">Manual Classification</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step">Enter Data into System</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step highlighted-node">Verify Against Original</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node flow-node-step">Route to Processing Queue</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comparison-bottombar">
+      <button class="btn btn-secondary" style="font-size:13px;">Back to Individual Review</button>
+      <div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ██ JavaScript ██ -->
+<script>
+  const navButtons = document.querySelectorAll('.nav-btn');
+  const sections = document.querySelectorAll('.screen-section');
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      sections.forEach(s => {
+        s.classList.toggle('active', s.id === target);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
