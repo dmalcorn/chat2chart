@@ -199,4 +199,10 @@ Some elements
     expect(skill.followUpStrategies).toBeNull();
     expect(skill.reflectiveSummaryTemplate).toBeNull();
   });
+
+  it('returns cached result on second call for the same skill', async () => {
+    const first = await loadSkill('federal-document-processing');
+    const second = await loadSkill('federal-document-processing');
+    expect(first).toBe(second);
+  });
 });

@@ -247,3 +247,8 @@ None — all tasks completed without issues.
 - `src/lib/interview/session.test.ts` (created)
 - `src/lib/synthesis/state-machine.test.ts` (created)
 - `src/lib/db/queries.ts` (modified — added 5 new query functions)
+
+### Review Findings
+- [x] [Review][Patch] `InterviewFlowController` ignores `projectName` prop — fixed destructuring [interview-flow-controller.tsx]
+- [x] [Review][Defer] `transitionInterview` TOCTOU — no atomicity on status check, deferred to deferred-work.md
+- [x] [Review][Note] P4 (attribution field) — `speaker` enum (`agent`|`interviewee`) serves as attribution per AC#3; no schema change needed

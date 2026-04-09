@@ -59,3 +59,9 @@
 
 - No error handling on parallel DB queries in `page.tsx:34-38` — `Promise.all` has no try/catch; DB errors surface as Next.js 500. Pre-existing pattern, no error.tsx exists for the interview route segment.
 - ViewportCheck SSR hydration flash on small viewports — `useState(true)` causes brief content flash on phones before useEffect fires. Spec acknowledges this trade-off by design.
+
+## Deferred from: code review of Epic 3, stories 3.1–3.3 (2026-04-09)
+
+- `transitionInterview` has TOCTOU — read-then-write without a transaction in `src/lib/synthesis/state-machine.ts`. Two concurrent transitions can both pass validation. Needs a DB-level `SELECT ... FOR UPDATE` or optimistic locking. Pre-existing architectural pattern.
+- `parseFrontmatter` multiline YAML handling is fragile — inline parser in `src/lib/interview/skill-loader.ts` doesn't handle all YAML multiline edge cases (blank lines in `>-` blocks). Works for current skill files. A proper YAML parser would be the real fix but adds a dependency.
+- `session.ts` bypassed by message route — `src/lib/interview/session.ts` manages session state per Story 3.2, but `src/app/api/interview/[token]/messages/route.ts` implements its own inline segment/sequence logic. These should converge when Story 3.5 (Conversation Thread UI) lands. The session module uses `getExchangeCountByInterviewId` while the route uses `getMaxSequenceNumber` — different strategies for the same concern.

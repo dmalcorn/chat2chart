@@ -262,3 +262,7 @@ None — all tasks completed without issues.
 - `src/lib/interview/skill-loader.test.ts` (created)
 - `src/lib/ai/prompts/base-template.test.ts` (created)
 - `src/lib/ai/prompts/prompt-assembler.test.ts` (created)
+
+### Review Findings
+- [x] [Review][Patch] Skill loader missing caching — added module-level Map cache [skill-loader.ts]
+- [x] [Review][Defer] parseFrontmatter multiline YAML handling fragile — works for current skills, deferred to deferred-work.md

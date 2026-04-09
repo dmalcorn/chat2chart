@@ -354,3 +354,12 @@ None.
 - `src/lib/schema/api-requests.ts` (modified)
 - `src/lib/db/queries.ts` (modified)
 - `src/lib/ai/prompts/base-template.ts` (modified)
+
+### Review Findings
+- [x] [Review][Patch] Race condition on sequence numbers — added `persistExchangeWithRetry` with unique constraint retry [route.ts]
+- [x] [Review][Patch] `request.json()` returns 500 on malformed JSON — wrapped in try/catch, returns 400 VALIDATION_ERROR [route.ts]
+- [x] [Review][Patch] Orphaned user exchange on LLM failure — retry-based persistence mitigates sequence gaps [route.ts]
+- [x] [Review][Patch] SSE `message` events missing `exchangeType` — added `type` SSE event emitted before content streaming [route.ts]
+- [x] [Review][Patch] `[REFLECTIVE_SUMMARY]` marker leaks to client — buffered initial tokens, detect and strip marker before streaming [route.ts]
+- [x] [Review][Patch] Removed unused `Connection: keep-alive` header [route.ts]
+- [x] [Review][Defer] `session.ts` bypassed by message route — deferred to Story 3.5, logged in deferred-work.md

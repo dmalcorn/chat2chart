@@ -15,6 +15,8 @@ import { resolveProvider } from '@/lib/ai';
 import type { Message } from '@/lib/ai';
 
 const REFLECTIVE_SUMMARY_MARKER = '[REFLECTIVE_SUMMARY]';
+const MARKER_BUFFER_LENGTH = REFLECTIVE_SUMMARY_MARKER.length + 5;
+const MAX_SEQUENCE_RETRIES = 3;
 
 function detectExchangeType(content: string): {
   exchangeType: 'question' | 'reflective_summary';
@@ -32,6 +34,28 @@ function detectExchangeType(content: string): {
 
 function sseEncode(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+async function persistExchangeWithRetry(data: {
+  interviewId: string;
+  segmentId: string;
+  sequenceNumber: number;
+  exchangeType: 'question' | 'response' | 'reflective_summary' | 'confirmation' | 'revised_summary';
+  speaker: 'agent' | 'interviewee';
+  content: string;
+}) {
+  for (let attempt = 0; attempt < MAX_SEQUENCE_RETRIES; attempt++) {
+    try {
+      return await createInterviewExchange(data);
+    } catch (error: unknown) {
+      const isUniqueViolation =
+        error instanceof Error && error.message.includes('uq_interview_exchanges_sequence');
+      if (!isUniqueViolation || attempt === MAX_SEQUENCE_RETRIES - 1) throw error;
+      const freshMax = await getMaxSequenceNumber(data.interviewId);
+      data = { ...data, sequenceNumber: freshMax + 1 };
+    }
+  }
+  throw new Error('Failed to persist exchange after retries');
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -76,7 +100,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       );
     }
 
-    const body = await request.json();
+    // P2: Handle malformed JSON gracefully
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        {
+          error: {
+            message: 'Request body must be valid JSON',
+            code: 'VALIDATION_ERROR',
+          },
+        },
+        { status: 400 },
+      );
+    }
+
     const parsed = sendMessageSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -123,8 +162,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
         ? lastExchange.segmentId
         : crypto.randomUUID();
 
-    // Persist user message immediately (before LLM call)
-    await createInterviewExchange({
+    // P1+P3: Persist user message with retry for sequence conflicts
+    await persistExchangeWithRetry({
       interviewId: interview.id,
       segmentId,
       sequenceNumber: userSequence,
@@ -149,18 +188,65 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       async start(controller) {
         try {
           let fullResponse = '';
+          let buffer = '';
+          let markerDetected = false;
+          let exchangeType: 'question' | 'reflective_summary' = 'question';
+          let typeEmitted = false;
+
           for await (const token of provider.streamResponse(systemPrompt, conversation)) {
             fullResponse += token;
-            // Send interim token — exchangeType determined after full response
-            controller.enqueue(encoder.encode(sseEncode('message', { content: token })));
+
+            // P8: Buffer initial tokens to detect and strip the marker
+            if (!typeEmitted) {
+              buffer += token;
+              if (buffer.trimStart().startsWith(REFLECTIVE_SUMMARY_MARKER)) {
+                markerDetected = true;
+                exchangeType = 'reflective_summary';
+                // Strip marker from buffer and emit type event
+                const cleanBuffer = buffer
+                  .trimStart()
+                  .slice(REFLECTIVE_SUMMARY_MARKER.length)
+                  .trimStart();
+                controller.enqueue(
+                  encoder.encode(sseEncode('type', { exchangeType: 'reflective_summary' })),
+                );
+                typeEmitted = true;
+                if (cleanBuffer.length > 0) {
+                  controller.enqueue(
+                    encoder.encode(sseEncode('message', { content: cleanBuffer })),
+                  );
+                }
+              } else if (buffer.length >= MARKER_BUFFER_LENGTH) {
+                // Buffer is long enough — no marker present
+                exchangeType = 'question';
+                controller.enqueue(encoder.encode(sseEncode('type', { exchangeType: 'question' })));
+                typeEmitted = true;
+                controller.enqueue(encoder.encode(sseEncode('message', { content: buffer })));
+              }
+              // Still buffering — don't emit yet
+            } else {
+              controller.enqueue(encoder.encode(sseEncode('message', { content: token })));
+            }
           }
 
-          // Detect exchange type from full response
-          const { exchangeType, cleanContent } = detectExchangeType(fullResponse);
+          // Flush remaining buffer if type was never emitted (very short response)
+          if (!typeEmitted) {
+            const detected = detectExchangeType(buffer);
+            exchangeType = detected.exchangeType;
+            controller.enqueue(encoder.encode(sseEncode('type', { exchangeType })));
+            controller.enqueue(
+              encoder.encode(sseEncode('message', { content: detected.cleanContent })),
+            );
+          }
 
-          // Persist agent response
+          // Determine clean content for persistence
+          const { cleanContent } = markerDetected
+            ? detectExchangeType(fullResponse)
+            : { cleanContent: fullResponse };
+
+          // P1: Persist agent response with retry for sequence conflicts
           const agentSequence = userSequence + 1;
-          const agentExchange = await createInterviewExchange({
+          const agentExchange = await persistExchangeWithRetry({
             interviewId: interview.id,
             segmentId,
             sequenceNumber: agentSequence,
@@ -197,7 +283,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
       },
     });
   } catch (error) {

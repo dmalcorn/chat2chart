@@ -118,9 +118,15 @@ function parseSections(body: string): Map<string, string> {
   return sections;
 }
 
+// --- Cache ---
+
+const skillCache = new Map<string, SkillDefinition>();
+
 // --- Skill Loader ---
 
 export async function loadSkill(skillName: string): Promise<SkillDefinition> {
+  const cached = skillCache.get(skillName);
+  if (cached) return cached;
   const skillDir = path.join(process.cwd(), 'skills', skillName);
 
   try {
@@ -163,7 +169,7 @@ export async function loadSkill(skillName: string): Promise<SkillDefinition> {
     }
   }
 
-  return {
+  const definition: SkillDefinition = {
     name: frontmatter.name,
     description: frontmatter.description,
     persona: {
@@ -177,4 +183,7 @@ export async function loadSkill(skillName: string): Promise<SkillDefinition> {
     reflectiveSummaryTemplate: sections.get('Reflective Summary Template') ?? null,
     rawContent,
   };
+
+  skillCache.set(skillName, definition);
+  return definition;
 }

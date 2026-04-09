@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ConsentScreen } from './consent-screen';
-import { ActiveInterviewPlaceholder } from './active-interview-placeholder';
+import { ConversationThread } from './conversation-thread';
 
 interface InterviewFlowControllerProps {
   intervieweeName: string;
@@ -19,13 +19,7 @@ export function InterviewFlowController({
   const [started, setStarted] = useState(false);
 
   if (started) {
-    return (
-      <ActiveInterviewPlaceholder
-        intervieweeName={intervieweeName}
-        processNodeName={processNodeName}
-        token={token}
-      />
-    );
+    return <ConversationThread token={token} />;
   }
 
   return (

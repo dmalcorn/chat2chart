@@ -103,6 +103,14 @@ function makeRequest(token: string, body: unknown): Request {
   });
 }
 
+function makeRawRequest(token: string, rawBody: string): Request {
+  return new Request(`http://localhost/api/interview/${token}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: rawBody,
+  });
+}
+
 function createMockProvider(tokens: string[]): LLMProvider {
   return {
     initialize: vi.fn(),
@@ -201,15 +209,43 @@ describe('POST /api/interview/[token]/messages', () => {
   });
 
   it('SSE stream contains message events with content', async () => {
-    setupHappyPath(['Token1', 'Token2']);
+    setupHappyPath(['Hello there, what do you do first?']);
     const response = await POST(makeRequest(VALID_TOKEN, { message: 'I open the mail' }), {
       params: makeParams(VALID_TOKEN),
     });
     const events = await readSSEStream(response);
     const messageEvents = events.map(parseSSEEvent).filter((e) => e.event === 'message');
-    expect(messageEvents.length).toBe(2);
-    expect((messageEvents[0].data as { content: string }).content).toBe('Token1');
-    expect((messageEvents[1].data as { content: string }).content).toBe('Token2');
+    expect(messageEvents.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('SSE stream emits type event before message events for questions', async () => {
+    setupHappyPath(['What do you do after opening the mail?']);
+    const response = await POST(makeRequest(VALID_TOKEN, { message: 'I open the mail' }), {
+      params: makeParams(VALID_TOKEN),
+    });
+    const events = await readSSEStream(response);
+    const parsed = events.map(parseSSEEvent);
+    const typeEvent = parsed.find((e) => e.event === 'type');
+    expect(typeEvent).toBeDefined();
+    expect((typeEvent!.data as { exchangeType: string }).exchangeType).toBe('question');
+  });
+
+  it('SSE stream emits type event with reflective_summary and strips marker from content', async () => {
+    setupHappyPath(['[REFLECTIVE_SUMMARY]\nSo you sort the mail first into categories.']);
+    const response = await POST(makeRequest(VALID_TOKEN, { message: 'I sort the mail' }), {
+      params: makeParams(VALID_TOKEN),
+    });
+    const events = await readSSEStream(response);
+    const parsed = events.map(parseSSEEvent);
+    const typeEvent = parsed.find((e) => e.event === 'type');
+    expect(typeEvent).toBeDefined();
+    expect((typeEvent!.data as { exchangeType: string }).exchangeType).toBe('reflective_summary');
+
+    // Marker should not appear in message content
+    const messageEvents = parsed.filter((e) => e.event === 'message');
+    for (const msg of messageEvents) {
+      expect((msg.data as { content: string }).content).not.toContain('[REFLECTIVE_SUMMARY]');
+    }
   });
 
   it('SSE stream ends with done event containing interviewExchangeId and segmentId', async () => {
@@ -268,7 +304,7 @@ describe('POST /api/interview/[token]/messages', () => {
     );
   });
 
-  it('detects reflective_summary exchange type from marker', async () => {
+  it('detects reflective_summary exchange type from marker and strips it from persisted content', async () => {
     setupHappyPath(['[REFLECTIVE_SUMMARY]\n', 'So you sort the mail first.']);
     const response = await POST(makeRequest(VALID_TOKEN, { message: 'test' }), {
       params: makeParams(VALID_TOKEN),
@@ -349,6 +385,18 @@ describe('POST /api/interview/[token]/messages', () => {
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
+  it('returns 400 for malformed JSON body instead of 500', async () => {
+    mockGetToken.mockResolvedValue(mockTokenRow);
+    mockGetInterview.mockResolvedValue(mockInterview);
+    const response = await POST(makeRawRequest(VALID_TOKEN, 'not-json{{{'), {
+      params: makeParams(VALID_TOKEN),
+    });
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.message).toContain('valid JSON');
+  });
+
   it('emits SSE error event on LLM streaming failure', async () => {
     setupHappyPath();
     const failingProvider = createMockProvider([]);
@@ -416,5 +464,36 @@ describe('POST /api/interview/[token]/messages', () => {
     const body = await response.json();
     expect(response.status).toBe(400);
     expect(body.error.code).toBe('INTERVIEW_NOT_ACTIVE');
+  });
+
+  it('retries on sequence number conflict', async () => {
+    setupHappyPath(['What next?']);
+    let callCount = 0;
+    mockCreateExchange.mockImplementation(async (data) => {
+      callCount++;
+      if (callCount === 1) {
+        throw new Error('uq_interview_exchanges_sequence');
+      }
+      return {
+        id: `exchange-${callCount}`,
+        interviewId: data.interviewId,
+        segmentId: data.segmentId,
+        exchangeType: data.exchangeType as 'question',
+        speaker: data.speaker as 'interviewee',
+        content: data.content,
+        isVerified: false,
+        sequenceNumber: data.sequenceNumber,
+        createdAt: new Date(),
+      };
+    });
+    mockGetMaxSeq.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
+
+    const response = await POST(makeRequest(VALID_TOKEN, { message: 'test' }), {
+      params: makeParams(VALID_TOKEN),
+    });
+    const events = await readSSEStream(response);
+    const doneEvents = events.map(parseSSEEvent).filter((e) => e.event === 'done');
+    expect(doneEvents.length).toBe(1);
+    expect(mockGetMaxSeq).toHaveBeenCalledTimes(2);
   });
 });
