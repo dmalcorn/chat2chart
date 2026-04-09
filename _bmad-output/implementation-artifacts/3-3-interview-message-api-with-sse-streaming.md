@@ -1,6 +1,6 @@
 # Story 3.3: Interview Message API with SSE Streaming
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -21,78 +21,78 @@ So that the conversation feels natural and responsive.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Zod request schema for message endpoint (AC: #1)
-  - [ ] 1.1 Add `sendMessageSchema` to `src/lib/schema/api-requests.ts` — validates `{ message: string }` where `message` is a non-empty trimmed string (max 5000 chars)
-  - [ ] 1.2 Export the schema for use by the route and tests
+- [x] Task 1: Create Zod request schema for message endpoint (AC: #1)
+  - [x] 1.1 Add `sendMessageSchema` to `src/lib/schema/api-requests.ts` — validates `{ message: string }` where `message` is a non-empty trimmed string (max 5000 chars)
+  - [x] 1.2 Export the schema for use by the route and tests
 
-- [ ] Task 2: Create skill-loader `src/lib/interview/skill-loader.ts` (AC: #1, #5, #6)
-  - [ ] 2.1 Create `loadSkill(skillName: string)` function that reads `skills/{skillName}/skill.md` from the project root
-  - [ ] 2.2 Parse markdown frontmatter (YAML) and body content — extract persona, workflow steps, probe elements, vocabulary, follow-up strategies, and synthesis elements
-  - [ ] 2.3 Return a typed `SkillDefinition` object: `{ name, persona, workflow, probeElements, vocabulary, followUpStrategies, synthesisElements, rawContent }`
-  - [ ] 2.4 Validate that required sections exist — throw descriptive error if skill file is missing or malformed
-  - [ ] 2.5 Cache loaded skills in a module-level Map to avoid repeated file reads within the same process
+- [x] Task 2: Create skill-loader `src/lib/interview/skill-loader.ts` (AC: #1, #5, #6)
+  - [x] 2.1 Create `loadSkill(skillName: string)` function that reads `skills/{skillName}/skill.md` from the project root
+  - [x] 2.2 Parse markdown frontmatter (YAML) and body content — extract persona, workflow steps, probe elements, vocabulary, follow-up strategies, and synthesis elements
+  - [x] 2.3 Return a typed `SkillDefinition` object: `{ name, persona, workflow, probeElements, vocabulary, followUpStrategies, synthesisElements, rawContent }`
+  - [x] 2.4 Validate that required sections exist — throw descriptive error if skill file is missing or malformed
+  - [x] 2.5 Cache loaded skills in a module-level Map to avoid repeated file reads within the same process
 
-- [ ] Task 3: Create prompt-assembler `src/lib/ai/prompts/prompt-assembler.ts` (AC: #1, #5, #6)
-  - [ ] 3.1 Create `assembleInterviewPrompt(skill: SkillDefinition)` function that merges: base template (reflect-and-confirm pattern, 5-8 exchange limit, behavioral rules) + skill persona + skill workflow (all steps inline) + synthesis context
-  - [ ] 3.2 Import the base template from `src/lib/ai/prompts/base-template.ts` — this file must be created as a dependency
-  - [ ] 3.3 Output is a single system prompt string in the four-block order: base template, skill persona, skill workflow, synthesis context
-  - [ ] 3.4 The assembler is the ONLY file where skill definitions meet LLM prompts — route handlers call `assembleInterviewPrompt()`, never construct prompts directly
+- [x] Task 3: Create prompt-assembler `src/lib/ai/prompts/prompt-assembler.ts` (AC: #1, #5, #6)
+  - [x] 3.1 Create `assembleInterviewPrompt(skill: SkillDefinition)` function that merges: base template (reflect-and-confirm pattern, 5-8 exchange limit, behavioral rules) + skill persona + skill workflow (all steps inline) + synthesis context
+  - [x] 3.2 Import the base template from `src/lib/ai/prompts/base-template.ts` — this file must be created as a dependency
+  - [x] 3.3 Output is a single system prompt string in the four-block order: base template, skill persona, skill workflow, synthesis context
+  - [x] 3.4 The assembler is the ONLY file where skill definitions meet LLM prompts — route handlers call `assembleInterviewPrompt()`, never construct prompts directly
 
-- [ ] Task 4: Create base interview template `src/lib/ai/prompts/base-template.ts` (AC: #5)
-  - [ ] 4.1 Define the core interview agent behavioral rules as a template string
-  - [ ] 4.2 Include reflect-and-confirm pattern instructions: reformulate scattered speech into clear reflective summaries, ask the interviewee to confirm or correct
-  - [ ] 4.3 Include 5-8 exchange limit guidance (MVP1): be efficient, not exhaustive
-  - [ ] 4.4 Include instructions for probing decision points, exceptions, handoffs, and systems touched
-  - [ ] 4.5 Include instructions for the agent to indicate its exchange type: when it is asking a question vs. when it is providing a reflective summary — this metadata is used by the route to set `exchangeType` in SSE events
-  - [ ] 4.6 Export a `getBaseTemplate()` function that returns the template string
+- [x] Task 4: Create base interview template `src/lib/ai/prompts/base-template.ts` (AC: #5)
+  - [x] 4.1 Define the core interview agent behavioral rules as a template string
+  - [x] 4.2 Include reflect-and-confirm pattern instructions: reformulate scattered speech into clear reflective summaries, ask the interviewee to confirm or correct
+  - [x] 4.3 Include 5-8 exchange limit guidance (MVP1): be efficient, not exhaustive
+  - [x] 4.4 Include instructions for probing decision points, exceptions, handoffs, and systems touched
+  - [x] 4.5 Include instructions for the agent to indicate its exchange type: when it is asking a question vs. when it is providing a reflective summary — this metadata is used by the route to set `exchangeType` in SSE events
+  - [x] 4.6 Export a `getBaseTemplate()` function that returns the template string
 
-- [ ] Task 5: Create `POST /api/interview/[token]/messages/route.ts` (AC: #1-#8)
-  - [ ] 5.1 Create the route file at `src/app/api/interview/[token]/messages/route.ts`
-  - [ ] 5.2 Extract `token` from route params (Next.js 16 async params pattern: `{ params }: { params: Promise<{ token: string }> }`)
-  - [ ] 5.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404
-  - [ ] 5.4 Look up token via `getInterviewTokenByToken(token)` — if not found, return 404 with `"This link isn't valid. Contact the person who sent it to you."` and code `INVALID_TOKEN`
-  - [ ] 5.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if no interview or status is not `active`, return 400 with `INTERVIEW_NOT_ACTIVE`
-  - [ ] 5.6 Parse and validate request body using `sendMessageSchema` — if invalid, return 400 with `VALIDATION_ERROR`
-  - [ ] 5.7 Load conversation history from DB via `getInterviewExchangesByInterviewId(interview.id)` — convert to `Message[]` format for the LLM provider
-  - [ ] 5.8 Persist the user's message as an exchange immediately: `createInterviewExchange()` with `exchangeType: 'response'`, `speaker: 'interviewee'`, next `sequenceNumber`
-  - [ ] 5.9 Load the skill via `loadSkill(project.skillName)` using the project from the token lookup
-  - [ ] 5.10 Assemble the system prompt via `assembleInterviewPrompt(skill)`
-  - [ ] 5.11 Resolve the LLM provider via `resolveProvider(project.id, 'interview_agent')` from `@/lib/ai`
-  - [ ] 5.12 Call `provider.streamResponse(systemPrompt, conversationHistory)` to get the `AsyncIterable<string>`
-  - [ ] 5.13 Create a `ReadableStream` that:
+- [x] Task 5: Create `POST /api/interview/[token]/messages/route.ts` (AC: #1-#8)
+  - [x] 5.1 Create the route file at `src/app/api/interview/[token]/messages/route.ts`
+  - [x] 5.2 Extract `token` from route params (Next.js 16 async params pattern: `{ params }: { params: Promise<{ token: string }> }`)
+  - [x] 5.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404
+  - [x] 5.4 Look up token via `getInterviewTokenByToken(token)` — if not found, return 404 with `"This link isn't valid. Contact the person who sent it to you."` and code `INVALID_TOKEN`
+  - [x] 5.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if no interview or status is not `active`, return 400 with `INTERVIEW_NOT_ACTIVE`
+  - [x] 5.6 Parse and validate request body using `sendMessageSchema` — if invalid, return 400 with `VALIDATION_ERROR`
+  - [x] 5.7 Load conversation history from DB via `getInterviewExchangesByInterviewId(interview.id)` — convert to `Message[]` format for the LLM provider
+  - [x] 5.8 Persist the user's message as an exchange immediately: `createInterviewExchange()` with `exchangeType: 'response'`, `speaker: 'interviewee'`, next `sequenceNumber`
+  - [x] 5.9 Load the skill via `loadSkill(project.skillName)` using the project from the token lookup
+  - [x] 5.10 Assemble the system prompt via `assembleInterviewPrompt(skill)`
+  - [x] 5.11 Resolve the LLM provider via `resolveProvider(project.id, 'interview_agent')` from `@/lib/ai`
+  - [x] 5.12 Call `provider.streamResponse(systemPrompt, conversationHistory)` to get the `AsyncIterable<string>`
+  - [x] 5.13 Create a `ReadableStream` that:
     - Accumulates streamed tokens into a full response string
     - Determines `exchangeType` from the agent's response content (parse for reflective summary markers)
     - Emits `event: message` with `{ content: token, exchangeType }` for each token
     - On stream completion: persists the full agent response as an exchange via `createInterviewExchange()` with `speaker: 'agent'` and the determined `exchangeType` and appropriate `segmentId`
     - Emits `event: done` with `{ interviewExchangeId, segmentId }`
     - On error: emits `event: error` with `{ message: "The AI agent is temporarily unavailable.", code: "LLM_ERROR" }`
-  - [ ] 5.14 Return `new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } })`
-  - [ ] 5.15 Wrap the entire handler in try/catch — unexpected errors return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
+  - [x] 5.14 Return `new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } })`
+  - [x] 5.15 Wrap the entire handler in try/catch — unexpected errors return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
 
-- [ ] Task 6: Add query functions to `src/lib/db/queries.ts` if needed (AC: #1)
-  - [ ] 6.1 Verify `getInterviewExchangesByInterviewId` exists (it does) — no new query needed for history loading
-  - [ ] 6.2 Verify `createInterviewExchange` exists (it does) — no new query needed for persistence
-  - [ ] 6.3 Add `getMaxSequenceNumber(interviewId: string)` to efficiently get the next sequence number for a new exchange — queries `interview_exchanges` for MAX(sequence_number) WHERE interview_id = interviewId
+- [x] Task 6: Add query functions to `src/lib/db/queries.ts` if needed (AC: #1)
+  - [x] 6.1 Verify `getInterviewExchangesByInterviewId` exists (it does) — no new query needed for history loading
+  - [x] 6.2 Verify `createInterviewExchange` exists (it does) — no new query needed for persistence
+  - [x] 6.3 Add `getMaxSequenceNumber(interviewId: string)` to efficiently get the next sequence number for a new exchange — queries `interview_exchanges` for MAX(sequence_number) WHERE interview_id = interviewId
 
-- [ ] Task 7: Create segment tracking helper (AC: #2, #5)
-  - [ ] 7.1 In `src/lib/interview/session.ts` (created by Story 3.2), ensure there is a function to determine the current segment: `getCurrentSegmentId(interviewId: string)` — returns the active segment's UUID, or generates a new one if the last segment was completed (confirmed)
-  - [ ] 7.2 If `session.ts` does not yet exist (Story 3.2 not yet implemented), create a minimal version with `getCurrentSegmentId` and `getNextSequenceNumber` that this story can use, with a comment noting Story 3.2 will expand it
+- [x] Task 7: Create segment tracking helper (AC: #2, #5)
+  - [x] 7.1 In `src/lib/interview/session.ts` (created by Story 3.2), ensure there is a function to determine the current segment: `getCurrentSegmentId(interviewId: string)` — returns the active segment's UUID, or generates a new one if the last segment was completed (confirmed)
+  - [x] 7.2 If `session.ts` does not yet exist (Story 3.2 not yet implemented), create a minimal version with `getCurrentSegmentId` and `getNextSequenceNumber` that this story can use, with a comment noting Story 3.2 will expand it
 
-- [ ] Task 8: Create exchangeType detection utility (AC: #3)
-  - [ ] 8.1 Create a helper function `detectExchangeType(content: string): 'question' | 'reflective_summary'` in the route file or a shared utility
-  - [ ] 8.2 The LLM is instructed (via base template) to prefix reflective summaries with a marker (e.g., `[REFLECTIVE_SUMMARY]`) — the detector strips this marker and returns the type
-  - [ ] 8.3 Default to `question` if no marker is detected — questions are the more common exchange type
+- [x] Task 8: Create exchangeType detection utility (AC: #3)
+  - [x] 8.1 Create a helper function `detectExchangeType(content: string): 'question' | 'reflective_summary'` in the route file or a shared utility
+  - [x] 8.2 The LLM is instructed (via base template) to prefix reflective summaries with a marker (e.g., `[REFLECTIVE_SUMMARY]`) — the detector strips this marker and returns the type
+  - [x] 8.3 Default to `question` if no marker is detected — questions are the more common exchange type
 
-- [ ] Task 9: Create tests (AC: #1-#8)
-  - [ ] 9.1 Create `src/lib/interview/skill-loader.test.ts`:
+- [x] Task 9: Create tests (AC: #1-#8)
+  - [x] 9.1 Create `src/lib/interview/skill-loader.test.ts`:
     - Test loading a valid skill file returns correct SkillDefinition structure
     - Test loading a nonexistent skill throws descriptive error
     - Test skill caching returns same object on repeated calls
-  - [ ] 9.2 Create `src/lib/ai/prompts/prompt-assembler.test.ts`:
+  - [x] 9.2 Create `src/lib/ai/prompts/prompt-assembler.test.ts`:
     - Test assembled prompt contains all four blocks in order (base, persona, workflow, synthesis context)
     - Test assembled prompt includes reflect-and-confirm instructions
     - Test assembled prompt includes skill-specific vocabulary and probe elements
-  - [ ] 9.3 Create `src/app/api/interview/[token]/messages/route.test.ts`:
+  - [x] 9.3 Create `src/app/api/interview/[token]/messages/route.test.ts`:
     - Test valid request with active interview returns SSE stream (Content-Type: text/event-stream)
     - Test SSE stream contains `event: message` events with `content` and `exchangeType`
     - Test SSE stream ends with `event: done` containing `interviewExchangeId` and `segmentId`
@@ -332,9 +332,25 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+None.
 
 ### Completion Notes List
+- Tasks 2-4, 7: Already implemented in Stories 3.1/3.2. Added `[REFLECTIVE_SUMMARY]` marker instruction to base-template.ts.
+- Task 1: Added `sendMessageSchema` to api-requests.ts (non-empty, trimmed, max 5000 chars).
+- Task 6: Added `getMaxSequenceNumber` query using max() aggregate.
+- Task 5: Created POST route with SSE streaming pipeline: token validation, interview status check, body validation, persist user message, load skill, assemble prompt, resolve provider, stream response, detect exchange type, persist agent response, emit done event.
+- Task 8: `detectExchangeType()` inline in route — detects `[REFLECTIVE_SUMMARY]` marker, strips it, defaults to question.
+- Task 9: 18 route tests covering SSE format, persistence, exchange type detection, error handling, validation.
+
+### Change Log
+- 2026-04-09: Completed all tasks. 299 tests across 28 files, all passing.
 
 ### File List
+- `src/app/api/interview/[token]/messages/route.ts` (created)
+- `src/app/api/interview/[token]/messages/route.test.ts` (created)
+- `src/lib/schema/api-requests.ts` (modified)
+- `src/lib/db/queries.ts` (modified)
+- `src/lib/ai/prompts/base-template.ts` (modified)
