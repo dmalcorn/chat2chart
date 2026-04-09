@@ -5,3 +5,7 @@ coverage
 _bmad
 _bmad-output
 .husky
+.agents
+.claude
+docs
+skills
