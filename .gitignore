@@ -1,11 +1,45 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
 .env.*
 !.env.example
-dist/
+
+# Next.js
 .next/
-.turbo/
-coverage/
+out/
+
+# Build
+dist/
 *.tsbuildinfo
+
+# Turbopack
+.turbo/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Editors & OS
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+.vscode/settings.json
+!.vscode/extensions.json
+
+# Drizzle
+drizzle/meta/_journal.json.bak
+
+# Debug logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+*.pem
+.vercel
