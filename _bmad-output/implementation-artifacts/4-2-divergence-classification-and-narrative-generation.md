@@ -1,6 +1,6 @@
 # Story 4.2: Divergence Classification & Narrative Generation
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -20,81 +20,81 @@ So that supervisors can understand where and why processes differ.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create classification Zod schemas in `src/lib/schema/synthesis.ts` (AC: #1, #7)
-  - [ ] 1.1 Create `src/lib/schema/synthesis.ts` if it does not exist
-  - [ ] 1.2 Define `divergenceTypeSchema` — Zod enum: `'genuinely_unique' | 'sequence_conflict' | 'uncertain_needs_review'`
-  - [ ] 1.3 Define `divergenceAnnotationSchema` — Zod object with fields: `id` (UUID), `stepId` (UUID, references the synthesized step), `divergenceType` (from 1.2), `intervieweeIds` (array of interview IDs attributed to this divergence), `confidence` (number 0-1), `explanation` (string, populated by narrator in Stage 5), `sourceType` (literal `'synthesis_inferred'`)
-  - [ ] 1.4 Define `implicitStepSchema` — Zod object with fields: `id` (UUID), `stepId` (UUID), `mentionedByIds` (array of interview IDs that mentioned it), `omittedByIds` (array of interview IDs that omitted it), `classification` (enum: `'likely_omission' | 'genuinely_different'`), `confidence` (number 0-1), `sourceType` (literal `'synthesis_inferred'`)
-  - [ ] 1.5 Define `classificationResultSchema` — Zod object containing `divergences` (array of divergenceAnnotationSchema), `implicitSteps` (array of implicitStepSchema), `processedAt` (ISO 8601 string)
-  - [ ] 1.6 Define `narrationResultSchema` — Zod object containing `divergences` (array of divergenceAnnotationSchema with `explanation` populated), `summary` (string — overall narrative summary of divergences)
-  - [ ] 1.7 Define `synthesisOutputSchema` — Zod object containing the full synthesis result shape: `normalizedWorkflow` (workflow JSON), `divergenceAnnotations` (array of divergenceAnnotationSchema), `matchMetadata` (match results from Stage 3), `narrativeSummary` (string), `interviewCount` (number), `sourceInterviewIds` (array of UUIDs)
-  - [ ] 1.8 Export all schemas and their inferred TypeScript types
+- [x] Task 1: Create classification Zod schemas in `src/lib/schema/synthesis.ts` (AC: #1, #7)
+  - [x] 1.1 Create `src/lib/schema/synthesis.ts` if it does not exist
+  - [x] 1.2 Define `divergenceTypeSchema` — Zod enum: `'genuinely_unique' | 'sequence_conflict' | 'uncertain_needs_review'`
+  - [x] 1.3 Define `divergenceAnnotationSchema` — Zod object with fields: `id` (UUID), `stepId` (UUID, references the synthesized step), `divergenceType` (from 1.2), `intervieweeIds` (array of interview IDs attributed to this divergence), `confidence` (number 0-1), `explanation` (string, populated by narrator in Stage 5), `sourceType` (literal `'synthesis_inferred'`)
+  - [x] 1.4 Define `implicitStepSchema` — Zod object with fields: `id` (UUID), `stepId` (UUID), `mentionedByIds` (array of interview IDs that mentioned it), `omittedByIds` (array of interview IDs that omitted it), `classification` (enum: `'likely_omission' | 'genuinely_different'`), `confidence` (number 0-1), `sourceType` (literal `'synthesis_inferred'`)
+  - [x] 1.5 Define `classificationResultSchema` — Zod object containing `divergences` (array of divergenceAnnotationSchema), `implicitSteps` (array of implicitStepSchema), `processedAt` (ISO 8601 string)
+  - [x] 1.6 Define `narrationResultSchema` — Zod object containing `divergences` (array of divergenceAnnotationSchema with `explanation` populated), `summary` (string — overall narrative summary of divergences)
+  - [x] 1.7 Define `synthesisOutputSchema` — Zod object containing the full synthesis result shape: `normalizedWorkflow` (workflow JSON), `divergenceAnnotations` (array of divergenceAnnotationSchema), `matchMetadata` (match results from Stage 3), `narrativeSummary` (string), `interviewCount` (number), `sourceInterviewIds` (array of UUIDs)
+  - [x] 1.8 Export all schemas and their inferred TypeScript types
 
-- [ ] Task 2: Create classification prompt template `src/lib/ai/prompts/synthesis/classify-template.ts` (AC: #2)
-  - [ ] 2.1 Create the file at `src/lib/ai/prompts/synthesis/classify-template.ts`
-  - [ ] 2.2 Export a `buildClassifyPrompt(input: ClassifyPromptInput): string` function
-  - [ ] 2.3 `ClassifyPromptInput` type includes: `matchResults` (Stage 3 output — step matches with match types), `individualSchemas` (array of individual process schemas with interviewee attribution), `skillContext` (domain vocabulary and synthesis elements from skill definition)
-  - [ ] 2.4 Prompt instructs the LLM to: (a) examine unmatched steps and partial matches to identify divergences, (b) classify each divergence as one of three types: Genuinely Unique, Sequence Conflict, or Uncertain — Needs Review, (c) identify implicit steps (steps one interviewee mentioned that another did not), (d) attribute each divergence to specific interviewees, (e) assign confidence levels (0-1) to each classification
-  - [ ] 2.5 Prompt includes the JSON Schema derived from `classificationResultSchema` as the required output format (for Claude's `output_format` parameter)
-  - [ ] 2.6 Prompt includes domain context from the skill definition's `synthesisElements` to inform classification (e.g., knowing that "pre-sort" and "classify digitally" are semantically different approaches, not the same step described differently)
+- [x] Task 2: Create classification prompt template `src/lib/ai/prompts/synthesis/classify-template.ts` (AC: #2)
+  - [x] 2.1 Create the file at `src/lib/ai/prompts/synthesis/classify-template.ts`
+  - [x] 2.2 Export a `buildClassifyPrompt(input: ClassifyPromptInput): string` function
+  - [x] 2.3 `ClassifyPromptInput` type includes: `matchResults` (Stage 3 output — step matches with match types), `individualSchemas` (array of individual process schemas with interviewee attribution), `skillContext` (domain vocabulary and synthesis elements from skill definition)
+  - [x] 2.4 Prompt instructs the LLM to: (a) examine unmatched steps and partial matches to identify divergences, (b) classify each divergence as one of three types: Genuinely Unique, Sequence Conflict, or Uncertain — Needs Review, (c) identify implicit steps (steps one interviewee mentioned that another did not), (d) attribute each divergence to specific interviewees, (e) assign confidence levels (0-1) to each classification
+  - [x] 2.5 Prompt includes the JSON Schema derived from `classificationResultSchema` as the required output format (for Claude's `output_format` parameter)
+  - [x] 2.6 Prompt includes domain context from the skill definition's `synthesisElements` to inform classification (e.g., knowing that "pre-sort" and "classify digitally" are semantically different approaches, not the same step described differently)
 
-- [ ] Task 3: Create `src/lib/synthesis/divergence.ts` — Stage 4 classifier (AC: #1, #3, #7)
-  - [ ] 3.1 Create the file at `src/lib/synthesis/divergence.ts`
-  - [ ] 3.2 Export an async function `classifyDivergences(input: ClassifyInput): Promise<ClassificationResult>` where `ClassifyInput` includes: `projectId` (string), `processNodeId` (string), `synthesisVersion` (number), `matchResults` (Stage 3 output), `individualSchemas` (array of individual process schemas)
-  - [ ] 3.3 Load the skill definition for the project via `skill-loader.ts` to get domain context for the prompt
-  - [ ] 3.4 Build the classification prompt via `buildClassifyPrompt()` from `classify-template.ts`
-  - [ ] 3.5 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')` from `provider-registry.ts`
-  - [ ] 3.6 Call `provider.sendMessage()` with the classification prompt and options: `{ temperature: 0.1, outputFormat: classificationResultJsonSchema }`
-  - [ ] 3.7 Parse and validate the LLM response against `classificationResultSchema` using Zod — if validation fails, retry once
-  - [ ] 3.8 Record timing: capture start time before LLM call, calculate `durationMs` after completion
-  - [ ] 3.9 Persist classification results to `synthesis_checkpoints` table via a query function: `{ projectId, processNodeId, synthesisVersion, stage: 'classify', resultJson: classificationResult, durationMs }`
-  - [ ] 3.10 Return the validated `ClassificationResult`
-  - [ ] 3.11 All produced elements must have `sourceType: 'synthesis_inferred'`
+- [x] Task 3: Create `src/lib/synthesis/divergence.ts` — Stage 4 classifier (AC: #1, #3, #7)
+  - [x] 3.1 Create the file at `src/lib/synthesis/divergence.ts`
+  - [x] 3.2 Export an async function `classifyDivergences(input: ClassifyInput): Promise<ClassificationResult>` where `ClassifyInput` includes: `projectId` (string), `processNodeId` (string), `synthesisVersion` (number), `matchResults` (Stage 3 output), `individualSchemas` (array of individual process schemas)
+  - [x] 3.3 Load the skill definition for the project via `skill-loader.ts` to get domain context for the prompt
+  - [x] 3.4 Build the classification prompt via `buildClassifyPrompt()` from `classify-template.ts`
+  - [x] 3.5 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')` from `provider-registry.ts`
+  - [x] 3.6 Call `provider.sendMessage()` with the classification prompt and options: `{ temperature: 0.1, outputFormat: classificationResultJsonSchema }`
+  - [x] 3.7 Parse and validate the LLM response against `classificationResultSchema` using Zod — if validation fails, retry once
+  - [x] 3.8 Record timing: capture start time before LLM call, calculate `durationMs` after completion
+  - [x] 3.9 Persist classification results to `synthesis_checkpoints` table via a query function: `{ projectId, processNodeId, synthesisVersion, stage: 'classify', resultJson: classificationResult, durationMs }`
+  - [x] 3.10 Return the validated `ClassificationResult`
+  - [x] 3.11 All produced elements must have `sourceType: 'synthesis_inferred'`
 
-- [ ] Task 4: Create narration prompt template `src/lib/ai/prompts/synthesis/narrate-template.ts` (AC: #5)
-  - [ ] 4.1 Create the file at `src/lib/ai/prompts/synthesis/narrate-template.ts`
-  - [ ] 4.2 Export a `buildNarratePrompt(input: NarratePromptInput): string` function
-  - [ ] 4.3 `NarratePromptInput` type includes: `classificationResult` (Stage 4 output — divergences with types and attributions), `individualSchemas` (array of individual process schemas with interviewee names/roles), `matchResults` (Stage 3 output for context), `skillContext` (domain vocabulary)
-  - [ ] 4.4 Prompt instructs the LLM to: (a) generate a concise human-readable explanation for each divergence, written for a non-technical supervisor audience, (b) reference interviewees by name and location, (c) explain WHY the divergence matters (operational impact), (d) generate an overall narrative summary of all divergences (2-4 sentences)
-  - [ ] 4.5 Prompt includes the JSON Schema derived from `narrationResultSchema` as the required output format
-  - [ ] 4.6 Temperature guidance: slightly higher (0.3-0.4) for natural language fluency while respecting structured output
+- [x] Task 4: Create narration prompt template `src/lib/ai/prompts/synthesis/narrate-template.ts` (AC: #5)
+  - [x] 4.1 Create the file at `src/lib/ai/prompts/synthesis/narrate-template.ts`
+  - [x] 4.2 Export a `buildNarratePrompt(input: NarratePromptInput): string` function
+  - [x] 4.3 `NarratePromptInput` type includes: `classificationResult` (Stage 4 output — divergences with types and attributions), `individualSchemas` (array of individual process schemas with interviewee names/roles), `matchResults` (Stage 3 output for context), `skillContext` (domain vocabulary)
+  - [x] 4.4 Prompt instructs the LLM to: (a) generate a concise human-readable explanation for each divergence, written for a non-technical supervisor audience, (b) reference interviewees by name and location, (c) explain WHY the divergence matters (operational impact), (d) generate an overall narrative summary of all divergences (2-4 sentences)
+  - [x] 4.5 Prompt includes the JSON Schema derived from `narrationResultSchema` as the required output format
+  - [x] 4.6 Temperature guidance: slightly higher (0.3-0.4) for natural language fluency while respecting structured output
 
-- [ ] Task 5: Create `src/lib/synthesis/narrator.ts` — Stage 5 narrator (AC: #4, #6)
-  - [ ] 5.1 Create the file at `src/lib/synthesis/narrator.ts`
-  - [ ] 5.2 Export an async function `narrateDivergences(input: NarrateInput): Promise<NarrationResult>` where `NarrateInput` includes: `projectId` (string), `processNodeId` (string), `synthesisVersion` (number), `classificationResult` (Stage 4 output), `individualSchemas` (array), `matchResults` (Stage 3 output)
-  - [ ] 5.3 Load the skill definition for domain context
-  - [ ] 5.4 Build the narration prompt via `buildNarratePrompt()` from `narrate-template.ts`
-  - [ ] 5.5 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')`
-  - [ ] 5.6 Call `provider.sendMessage()` with options: `{ temperature: 0.4, outputFormat: narrationResultJsonSchema }`
-  - [ ] 5.7 Parse and validate the LLM response against `narrationResultSchema` — if validation fails, retry once
-  - [ ] 5.8 Merge narration explanations back into the divergence annotations (each divergence now has its `explanation` field populated)
-  - [ ] 5.9 Return the validated `NarrationResult` including enriched divergence annotations and overall narrative summary
+- [x] Task 5: Create `src/lib/synthesis/narrator.ts` — Stage 5 narrator (AC: #4, #6)
+  - [x] 5.1 Create the file at `src/lib/synthesis/narrator.ts`
+  - [x] 5.2 Export an async function `narrateDivergences(input: NarrateInput): Promise<NarrationResult>` where `NarrateInput` includes: `projectId` (string), `processNodeId` (string), `synthesisVersion` (number), `classificationResult` (Stage 4 output), `individualSchemas` (array), `matchResults` (Stage 3 output)
+  - [x] 5.3 Load the skill definition for domain context
+  - [x] 5.4 Build the narration prompt via `buildNarratePrompt()` from `narrate-template.ts`
+  - [x] 5.5 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')`
+  - [x] 5.6 Call `provider.sendMessage()` with options: `{ temperature: 0.4, outputFormat: narrationResultJsonSchema }`
+  - [x] 5.7 Parse and validate the LLM response against `narrationResultSchema` — if validation fails, retry once
+  - [x] 5.8 Merge narration explanations back into the divergence annotations (each divergence now has its `explanation` field populated)
+  - [x] 5.9 Return the validated `NarrationResult` including enriched divergence annotations and overall narrative summary
 
-- [ ] Task 6: Create database query functions for synthesis persistence (AC: #3, #6)
-  - [ ] 6.1 Add to `src/lib/db/queries.ts`: `createSynthesisCheckpoint(data: { projectId, processNodeId, synthesisVersion, stage, resultJson, durationMs })` — inserts a row into `synthesis_checkpoints`
-  - [ ] 6.2 Add to `src/lib/db/queries.ts`: `createSynthesisResult(data: { projectId, processNodeId, synthesisVersion, workflowJson, mermaidDefinition?, interviewCount })` — inserts a row into `synthesis_results`
-  - [ ] 6.3 Add to `src/lib/db/queries.ts`: `getSynthesisCheckpoint(projectId, processNodeId, synthesisVersion, stage)` — retrieves a checkpoint for resume-on-retry
-  - [ ] 6.4 Add to `src/lib/db/queries.ts`: `getLatestSynthesisVersion(projectId, processNodeId)` — returns the highest `synthesisVersion` for a process node, or 0 if none
-  - [ ] 6.5 All query functions use Drizzle ORM — no raw SQL. Types inferred from Drizzle schema.
+- [x] Task 6: Create database query functions for synthesis persistence (AC: #3, #6)
+  - [x] 6.1 Add to `src/lib/db/queries.ts`: `createSynthesisCheckpoint(data: { projectId, processNodeId, synthesisVersion, stage, resultJson, durationMs })` — inserts a row into `synthesis_checkpoints`
+  - [x] 6.2 Add to `src/lib/db/queries.ts`: `createSynthesisResult(data: { projectId, processNodeId, synthesisVersion, workflowJson, mermaidDefinition?, interviewCount })` — inserts a row into `synthesis_results`
+  - [x] 6.3 Add to `src/lib/db/queries.ts`: `getSynthesisCheckpoint(projectId, processNodeId, synthesisVersion, stage)` — retrieves a checkpoint for resume-on-retry
+  - [x] 6.4 Add to `src/lib/db/queries.ts`: `getLatestSynthesisVersion(projectId, processNodeId)` — returns the highest `synthesisVersion` for a process node, or 0 if none
+  - [x] 6.5 All query functions use Drizzle ORM — no raw SQL. Types inferred from Drizzle schema.
 
-- [ ] Task 7: Integrate Stages 4-5 into the synthesis engine orchestrator (AC: #1-#6)
-  - [ ] 7.1 Update `src/lib/synthesis/engine.ts` (created by Story 4.1) to call `classifyDivergences()` after Stage 3 completes
-  - [ ] 7.2 After classification, call `narrateDivergences()` with the classification result
-  - [ ] 7.3 After narration, assemble the final synthesis output: normalized workflow (from Stage 3 match results), enriched divergence annotations (from Stages 4+5), match metadata, narrative summary
-  - [ ] 7.4 Validate the assembled output against `synthesisOutputSchema`
-  - [ ] 7.5 Persist the final result to `synthesis_results` via `createSynthesisResult()` — Stage 5 output goes to `synthesis_results.workflow_json`, NOT to checkpoints
-  - [ ] 7.6 On resume (retry after failure): check for existing `'classify'` checkpoint before re-running Stage 4. If checkpoint exists and is valid, skip to Stage 5.
-  - [ ] 7.7 Log stage durations for observability
+- [x] Task 7: Integrate Stages 4-5 into the synthesis engine orchestrator (AC: #1-#6)
+  - [x] 7.1 Update `src/lib/synthesis/engine.ts` (created by Story 4.1) to call `classifyDivergences()` after Stage 3 completes
+  - [x] 7.2 After classification, call `narrateDivergences()` with the classification result
+  - [x] 7.3 After narration, assemble the final synthesis output: normalized workflow (from Stage 3 match results), enriched divergence annotations (from Stages 4+5), match metadata, narrative summary
+  - [x] 7.4 Validate the assembled output against `synthesisOutputSchema`
+  - [x] 7.5 Persist the final result to `synthesis_results` via `createSynthesisResult()` — Stage 5 output goes to `synthesis_results.workflow_json`, NOT to checkpoints
+  - [x] 7.6 On resume (retry after failure): check for existing `'classify'` checkpoint before re-running Stage 4. If checkpoint exists and is valid, skip to Stage 5.
+  - [x] 7.7 Log stage durations for observability
 
-- [ ] Task 8: Create tests (AC: #1-#7)
-  - [ ] 8.1 Create `src/lib/schema/synthesis.test.ts`:
+- [x] Task 8: Create tests (AC: #1-#7)
+  - [x] 8.1 Create `src/lib/schema/synthesis.test.ts`:
     - Test `classificationResultSchema` validates correct classification output
     - Test `classificationResultSchema` rejects invalid divergence types
     - Test `divergenceAnnotationSchema` rejects `sourceType` values other than `'synthesis_inferred'`
     - Test `narrationResultSchema` validates correct narration output
     - Test `synthesisOutputSchema` validates complete synthesis result
     - Use real Zod validation — do NOT mock Zod
-  - [ ] 8.2 Create `src/lib/synthesis/divergence.test.ts`:
+  - [x] 8.2 Create `src/lib/synthesis/divergence.test.ts`:
     - Test `classifyDivergences()` calls LLM with correct temperature (0.1) and output format
     - Test `classifyDivergences()` persists checkpoint to `synthesis_checkpoints` with stage `'classify'`
     - Test `classifyDivergences()` retries once on Zod validation failure
@@ -102,22 +102,22 @@ So that supervisors can understand where and why processes differ.
     - Test all returned elements have `sourceType: 'synthesis_inferred'`
     - Mock `LLMProvider` interface — NOT `@anthropic-ai/sdk` directly
     - Mock `@/lib/db/queries` for checkpoint persistence
-  - [ ] 8.3 Create `src/lib/synthesis/narrator.test.ts`:
+  - [x] 8.3 Create `src/lib/synthesis/narrator.test.ts`:
     - Test `narrateDivergences()` calls LLM with correct temperature (0.4) and output format
     - Test `narrateDivergences()` populates `explanation` on each divergence annotation
     - Test `narrateDivergences()` returns a narrative summary string
     - Test `narrateDivergences()` retries once on Zod validation failure
     - Mock `LLMProvider` interface
-  - [ ] 8.4 Create `src/lib/ai/prompts/synthesis/classify-template.test.ts`:
+  - [x] 8.4 Create `src/lib/ai/prompts/synthesis/classify-template.test.ts`:
     - Test `buildClassifyPrompt()` includes match results in the prompt
     - Test `buildClassifyPrompt()` includes individual schema data
     - Test `buildClassifyPrompt()` includes skill domain context
     - Test prompt mentions all three divergence types
-  - [ ] 8.5 Create `src/lib/ai/prompts/synthesis/narrate-template.test.ts`:
+  - [x] 8.5 Create `src/lib/ai/prompts/synthesis/narrate-template.test.ts`:
     - Test `buildNarratePrompt()` includes classification results
     - Test `buildNarratePrompt()` includes interviewee names and roles
     - Test prompt instructs supervisor-friendly language
-  - [ ] 8.6 Create `src/lib/synthesis/engine.test.ts` (extend from Story 4.1):
+  - [x] 8.6 Create `src/lib/synthesis/engine.test.ts` (extend from Story 4.1):
     - Test engine calls Stage 4 after Stage 3 completes
     - Test engine calls Stage 5 after Stage 4 completes
     - Test engine persists final result to `synthesis_results` (not checkpoints) after Stage 5
@@ -307,9 +307,35 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- Fixed `// @vitest-environment node` incompatibility with `vi.mock()` — removed directive from all tests using mocks (pre-existing issue in Story 4.1 tests also fixed)
+- Fixed `schema.toJsonSchema()` → `z.toJSONSchema(schema)` — Zod v4 uses standalone function, not method
 
 ### Completion Notes List
+- All 8 tasks implemented and tested
+- Zod schemas in `src/lib/schema/synthesis.ts` define full classification/narration/output types
+- Classification prompt template instructs LLM on three divergence types + implicit step classification
+- `divergence.ts` (Stage 4) and `narrator.ts` (Stage 5) follow established LLM call pattern with retry-once on validation failure
+- Engine orchestrator replaced stubs with real Stage 4/5 calls, including classify checkpoint resume support
+- `getSynthesisCheckpoint` query added for resume-on-retry
+- All elements carry `sourceType: 'synthesis_inferred'` (enforced by Zod literal)
+- 49 new tests across 6 test files, all passing
 
 ### File List
+- `src/lib/schema/synthesis.ts` — NEW: Zod schemas for classification, narration, and synthesis output
+- `src/lib/schema/synthesis.test.ts` — NEW: Schema validation tests (real Zod, no mocks)
+- `src/lib/ai/prompts/synthesis/classify-template.ts` — NEW: Stage 4 classification prompt builder
+- `src/lib/ai/prompts/synthesis/classify-template.test.ts` — NEW: Prompt content tests
+- `src/lib/ai/prompts/synthesis/narrate-template.ts` — NEW: Stage 5 narration prompt builder
+- `src/lib/ai/prompts/synthesis/narrate-template.test.ts` — NEW: Prompt content tests
+- `src/lib/synthesis/divergence.ts` — NEW: Stage 4 divergence classifier
+- `src/lib/synthesis/divergence.test.ts` — NEW: Classifier tests
+- `src/lib/synthesis/narrator.ts` — NEW: Stage 5 narrator
+- `src/lib/synthesis/narrator.test.ts` — NEW: Narrator tests
+- `src/lib/db/queries.ts` — MODIFIED: Added `getSynthesisCheckpoint` query
+- `src/lib/synthesis/engine.ts` — MODIFIED: Replaced stubs with real Stage 4/5 calls, added checkpoint resume
+- `src/lib/synthesis/engine.test.ts` — MODIFIED: Updated tests for real Stage 4/5 integration
+- `src/lib/synthesis/correlator.test.ts` — MODIFIED: Fixed vitest environment directive
+- `src/app/api/synthesis/[nodeId]/route.test.ts` — MODIFIED: Fixed vitest environment directive
