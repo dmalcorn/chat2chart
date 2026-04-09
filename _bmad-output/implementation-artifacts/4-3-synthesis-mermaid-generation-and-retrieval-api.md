@@ -1,6 +1,6 @@
 # Story 4.3: Synthesis Mermaid Generation & Retrieval API
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -19,41 +19,41 @@ So that the comparison view can display them.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `src/lib/synthesis/mermaid-generator.ts` (AC: #1, #2)
-  - [ ] 1.1 Create function `generateSynthesisMermaid(synthesisWorkflow: SynthesisWorkflowJson): string` that accepts the `workflowJson` from `synthesis_results` and returns a Mermaid flowchart definition string
-  - [ ] 1.2 Generate `flowchart TD` (top-down) Mermaid syntax with:
+- [x] Task 1: Create `src/lib/synthesis/mermaid-generator.ts` (AC: #1, #2)
+  - [x] 1.1 Create function `generateSynthesisMermaid(synthesisWorkflow: SynthesisWorkflowJson): string` that accepts the `workflowJson` from `synthesis_results` and returns a Mermaid flowchart definition string
+  - [x] 1.2 Generate `flowchart TD` (top-down) Mermaid syntax with:
     - Rounded rectangles (`([...])`) for regular steps
     - Diamonds (`{...}`) for decision points
     - Arrows (`-->`) for sequence flow
     - Start/end nodes
-  - [ ] 1.3 For steps with subsumption matches, generate nested `subgraph` blocks to visually group subsumed steps
-  - [ ] 1.4 For steps with divergence annotations, apply CSS class names to nodes that encode the divergence type:
+  - [x] 1.3 For steps with subsumption matches, generate nested `subgraph` blocks to visually group subsumed steps
+  - [x] 1.4 For steps with divergence annotations, apply CSS class names to nodes that encode the divergence type:
     - `class nodeId divergence-unique` for "Genuinely Unique" type
     - `class nodeId divergence-sequence` for "Sequence Conflict" type
     - `class nodeId divergence-uncertain` for "Uncertain — Needs Review" type
-  - [ ] 1.5 Encode divergence metadata as Mermaid comments (`%%`) adjacent to annotated nodes — include divergence type, affected interviewee IDs, and a short description so the client rendering layer can parse them for badge generation
-  - [ ] 1.6 Add `classDef` statements for each divergence type using teal and amber color tokens:
+  - [x] 1.5 Encode divergence metadata as Mermaid comments (`%%`) adjacent to annotated nodes — include divergence type, affected interviewee IDs, and a short description so the client rendering layer can parse them for badge generation
+  - [x] 1.6 Add `classDef` statements for each divergence type using teal and amber color tokens:
     - `classDef divergence-unique fill:#CCFBF1,stroke:#0D9488,stroke-width:2px` (teal)
     - `classDef divergence-sequence fill:#99F6E4,stroke:#0F766E,stroke-width:2px` (darker teal)
     - `classDef divergence-uncertain fill:#FEF3C7,stroke:#D97706,stroke-width:2px` (amber)
-  - [ ] 1.7 Include step attribution as tooltip text where available (source interviewees for each step)
-  - [ ] 1.8 Ensure generated Mermaid definitions are valid and renderable by Mermaid 11.14.0
+  - [x] 1.7 Include step attribution as tooltip text where available (source interviewees for each step)
+  - [x] 1.8 Ensure generated Mermaid definitions are valid and renderable by Mermaid 11.14.0
 
-- [ ] Task 2: Add database query functions in `src/lib/db/queries.ts` (AC: #3, #6)
-  - [ ] 2.1 Add `getIndividualSchemasByNodeId(nodeId: string)` — queries `individualProcessSchemas` table by `processNodeId`, returns all individual schemas for the node with their associated interview data (interviewee name/role via join through `interviews` → `interviewTokens`)
-  - [ ] 2.2 Add `getSynthesisResultByNodeIdWithVersion(nodeId: string, version?: number)` — queries `synthesis_results` by `processNodeId`, returns the latest version by default or a specific version if provided. (The existing `getSynthesisResultByNodeId` can be reused or extended.)
-  - [ ] 2.3 Add `updateSynthesisResultMermaid(synthesisId: string, mermaidDefinition: string)` — updates the `mermaidDefinition` column on an existing `synthesis_results` row
-  - [ ] 2.4 All query functions return typed results inferred from the Drizzle schema — do NOT define separate TypeScript types
+- [x] Task 2: Add database query functions in `src/lib/db/queries.ts` (AC: #3, #6)
+  - [x] 2.1 Add `getIndividualSchemasByNodeId(nodeId: string)` — queries `individualProcessSchemas` table by `processNodeId`, returns all individual schemas for the node with their associated interview data (interviewee name/role via join through `interviews` → `interviewTokens`)
+  - [x] 2.2 Add `getSynthesisResultByNodeIdWithVersion(nodeId: string, version?: number)` — queries `synthesis_results` by `processNodeId`, returns the latest version by default or a specific version if provided. (The existing `getSynthesisResultByNodeId` can be reused or extended.)
+  - [x] 2.3 Add `updateSynthesisResultMermaid(synthesisId: string, mermaidDefinition: string)` — updates the `mermaidDefinition` column on an existing `synthesis_results` row
+  - [x] 2.4 All query functions return typed results inferred from the Drizzle schema — do NOT define separate TypeScript types
 
-- [ ] Task 3: Create `GET /api/synthesis/[nodeId]` route handler (AC: #3, #4, #5)
-  - [ ] 3.1 Create `src/app/api/synthesis/[nodeId]/route.ts`
-  - [ ] 3.2 Wrap the GET handler with `withSupervisorAuth` from `@/lib/auth/middleware` — supervisor session required
-  - [ ] 3.3 Extract `nodeId` from route params: `{ params }: { params: Promise<{ nodeId: string }> }` (Next.js 16 async params)
-  - [ ] 3.4 Validate that `nodeId` is a valid UUID format — if invalid, return 400 with `{ error: { message: "Invalid node ID format", code: "VALIDATION_ERROR" } }`
-  - [ ] 3.5 Look up process node via `getProcessNodeById(nodeId)` — if not found, return 404 with `{ error: { message: "Process node not found", code: "NODE_NOT_FOUND" } }`
-  - [ ] 3.6 Look up the latest synthesis result via `getSynthesisResultByNodeId(nodeId)` — if not found, return 404 with `{ error: { message: "No synthesis results available for this process node", code: "SYNTHESIS_NOT_FOUND" } }`
-  - [ ] 3.7 Look up all individual schemas for the node via `getIndividualSchemasByNodeId(nodeId)`
-  - [ ] 3.8 Return success response wrapped per API standard:
+- [x] Task 3: Create `GET /api/synthesis/[nodeId]` route handler (AC: #3, #4, #5)
+  - [x] 3.1 Create `src/app/api/synthesis/[nodeId]/route.ts`
+  - [x] 3.2 Wrap the GET handler with `withSupervisorAuth` from `@/lib/auth/middleware` — supervisor session required
+  - [x] 3.3 Extract `nodeId` from route params: `{ params }: { params: Promise<{ nodeId: string }> }` (Next.js 16 async params)
+  - [x] 3.4 Validate that `nodeId` is a valid UUID format — if invalid, return 400 with `{ error: { message: "Invalid node ID format", code: "VALIDATION_ERROR" } }`
+  - [x] 3.5 Look up process node via `getProcessNodeById(nodeId)` — if not found, return 404 with `{ error: { message: "Process node not found", code: "NODE_NOT_FOUND" } }`
+  - [x] 3.6 Look up the latest synthesis result via `getSynthesisResultByNodeId(nodeId)` — if not found, return 404 with `{ error: { message: "No synthesis results available for this process node", code: "SYNTHESIS_NOT_FOUND" } }`
+  - [x] 3.7 Look up all individual schemas for the node via `getIndividualSchemasByNodeId(nodeId)`
+  - [x] 3.8 Return success response wrapped per API standard:
     ```typescript
     {
       data: {
@@ -78,15 +78,15 @@ So that the comparison view can display them.
       }
     }
     ```
-  - [ ] 3.9 Wrap in try/catch — on unexpected errors, return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
+  - [x] 3.9 Wrap in try/catch — on unexpected errors, return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
 
-- [ ] Task 4: Integrate Mermaid generation into synthesis pipeline (AC: #1, #6)
-  - [ ] 4.1 After the synthesis pipeline completes (Stage 5 output stored in `synthesis_results`), call `generateSynthesisMermaid()` with the `workflowJson` from the synthesis result
-  - [ ] 4.2 Persist the generated Mermaid definition to `synthesis_results.mermaidDefinition` via `updateSynthesisResultMermaid()`
-  - [ ] 4.3 When synthesis is re-triggered (MVP3), the new synthesis version gets its own Mermaid definition — the old version's definition is preserved (immutable versioning)
+- [x] Task 4: Integrate Mermaid generation into synthesis pipeline (AC: #1, #6)
+  - [x] 4.1 After the synthesis pipeline completes (Stage 5 output stored in `synthesis_results`), call `generateSynthesisMermaid()` with the `workflowJson` from the synthesis result
+  - [x] 4.2 Persist the generated Mermaid definition to `synthesis_results.mermaidDefinition` via `updateSynthesisResultMermaid()`
+  - [x] 4.3 When synthesis is re-triggered (MVP3), the new synthesis version gets its own Mermaid definition — the old version's definition is preserved (immutable versioning)
 
-- [ ] Task 5: Create tests (AC: #1-#6)
-  - [ ] 5.1 Create `src/lib/synthesis/mermaid-generator.test.ts`:
+- [x] Task 5: Create tests (AC: #1-#6)
+  - [x] 5.1 Create `src/lib/synthesis/mermaid-generator.test.ts`:
     - Test that a minimal synthesis workflow (2 steps, no divergences) produces valid Mermaid `flowchart TD` syntax
     - Test that divergence annotations produce correct CSS class assignments (`divergence-unique`, `divergence-sequence`, `divergence-uncertain`)
     - Test that `classDef` statements are included for all three divergence types
@@ -94,7 +94,7 @@ So that the comparison view can display them.
     - Test that subsumption matches produce nested `subgraph` blocks
     - Test that decision points produce diamond-shaped nodes
     - Test with the expected demo divergences (sort timing, classification method, QC check)
-  - [ ] 5.2 Create `src/app/api/synthesis/[nodeId]/route.test.ts`:
+  - [x] 5.2 Create `src/app/api/synthesis/[nodeId]/route.test.ts`:
     - Test valid request with supervisor session returns 200 with synthesis + individual schemas
     - Test unauthenticated request returns 401 with `UNAUTHORIZED`
     - Test non-supervisor role returns 403 with `FORBIDDEN`
@@ -291,9 +291,27 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- Linter refactored route.ts to use `withSupervisorAuth` wrapper and added `isSupervisorForProject` check — adapted tests accordingly
+- Added try/catch to GET handler for AC#4 (structured error responses on failure)
+- Linter added `createSynthesisResultWithVersion` transactional query to prevent TOCTOU races
 
 ### Completion Notes List
+- All 5 tasks implemented and tested
+- Mermaid generator produces `flowchart TD` with rounded rectangles, diamonds, arrows, subgraphs, CSS classes, and metadata comments
+- Three divergence badge types encoded: `divergence-unique` (teal), `divergence-sequence` (darker teal), `divergence-uncertain` (amber)
+- GET `/api/synthesis/[nodeId]` returns synthesis + individual schemas with `{ data: T }` wrapper
+- Mermaid generation integrated into engine pipeline as non-fatal post-processing step
+- Route uses `withSupervisorAuth` middleware wrapper + `isSupervisorForProject` project-level access check
+- 27 new tests across 2 test files, all passing
+- Full suite: 593 tests, 59 files, all passing
 
 ### File List
+- `src/lib/synthesis/mermaid-generator.ts` — NEW: Synthesis JSON to Mermaid definition converter
+- `src/lib/synthesis/mermaid-generator.test.ts` — NEW: Mermaid generator tests (pure function, no mocks)
+- `src/app/api/synthesis/[nodeId]/route.ts` — MODIFIED: Added GET handler, refactored to use `withSupervisorAuth`
+- `src/app/api/synthesis/[nodeId]/route.test.ts` — MODIFIED: Added GET tests, updated mock strategy for middleware wrapper
+- `src/lib/db/queries.ts` — MODIFIED: Added `getIndividualSchemasByNodeIdWithInterviewees`, `getSynthesisResultByNodeIdWithVersion`, `updateSynthesisResultMermaid`, `isSupervisorForProject`
+- `src/lib/synthesis/engine.ts` — MODIFIED: Added Mermaid generation after synthesis result creation
