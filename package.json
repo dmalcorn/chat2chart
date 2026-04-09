@@ -1,0 +1,43 @@
+{
+  "name": "chat2chart",
+  "version": "1.0.0",
+  "description": "AI-powered workflow discovery tool. Workers describe how they do their jobs through voice conversations with an AI interview agent. Multiple interviews are synthesized into normalized workflows with divergence annotations. Output is structured JSON (Process Schema), visualized as Mermaid.js flowcharts.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmalcorn/chat2chart.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dmalcorn/chat2chart/issues"
+  },
+  "homepage": "https://github.com/dmalcorn/chat2chart#readme",
+  "devDependencies": {
+    "eslint": "10.2.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.1"
+  }
+}

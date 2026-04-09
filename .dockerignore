@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+coverage
+.git
+_bmad
+_bmad-output/brainstorming
+playwright-report
+test-results
+*.md
+!README.md
