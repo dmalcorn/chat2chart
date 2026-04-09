@@ -134,7 +134,7 @@ describe('InterviewPage', () => {
     vi.mocked(getProcessNodeById).mockResolvedValue(mockProcessNode);
 
     const result = await InterviewPage({ params: makeParams(VALID_TOKEN) });
-    expect(getNestedComponentName(result as React.JSX.Element)).toBe('ConsentPlaceholder');
+    expect(getNestedComponentName(result as React.JSX.Element)).toBe('InterviewFlowController');
   });
 
   it('renders active interview placeholder for active state', async () => {

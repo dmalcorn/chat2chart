@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, max } from 'drizzle-orm';
 import { db } from './connection';
 import {
   interviews,
@@ -159,6 +159,14 @@ export async function updateExchangeVerification(exchangeId: string, isVerified:
 export async function getExchangeCountByInterviewId(interviewId: string): Promise<number> {
   const [result] = await db
     .select({ value: count() })
+    .from(interviewExchanges)
+    .where(eq(interviewExchanges.interviewId, interviewId));
+  return result?.value ?? 0;
+}
+
+export async function getMaxSequenceNumber(interviewId: string): Promise<number> {
+  const [result] = await db
+    .select({ value: max(interviewExchanges.sequenceNumber) })
     .from(interviewExchanges)
     .where(eq(interviewExchanges.interviewId, interviewId));
   return result?.value ?? 0;

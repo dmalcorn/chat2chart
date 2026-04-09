@@ -7,7 +7,7 @@ import {
 } from '@/lib/db/queries';
 import { InvalidTokenScreen } from '@/components/interview/invalid-token-screen';
 import { ViewportCheck } from '@/components/interview/viewport-check';
-import { ConsentPlaceholder } from '@/components/interview/consent-placeholder';
+import { InterviewFlowController } from '@/components/interview/interview-flow-controller';
 import { ActiveInterviewPlaceholder } from '@/components/interview/active-interview-placeholder';
 import { CompletedViewPlaceholder } from '@/components/interview/completed-view-placeholder';
 
@@ -55,7 +55,7 @@ export default async function InterviewPage({ params }: { params: Promise<{ toke
     switch (interviewState) {
       case 'pending':
         return (
-          <ConsentPlaceholder
+          <InterviewFlowController
             intervieweeName={intervieweeName}
             processNodeName={processNodeName}
             projectName={projectName}

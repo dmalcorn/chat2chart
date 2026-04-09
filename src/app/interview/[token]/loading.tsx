@@ -1,7 +1,7 @@
 export default function InterviewLoading() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-[560px] rounded-lg bg-white p-8 shadow-lg">
+      <div className="w-full max-w-[560px] rounded-lg bg-card p-8 shadow-lg">
         {/* Heading skeleton */}
         <div className="mx-auto mb-6 h-7 w-3/4 animate-pulse rounded bg-gray-200" />
 

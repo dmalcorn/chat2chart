@@ -17,7 +17,8 @@ export async function bootstrapAccounts(): Promise<void> {
     return;
   }
 
-  const email = env.FIRST_SUPERVISOR_EMAIL;
+  const email = env.FIRST_SUPERVISOR_EMAIL!;
+  const password = env.FIRST_SUPERVISOR_PASSWORD!;
   const existing = await getUserByEmail(email);
 
   if (existing) {
@@ -25,7 +26,7 @@ export async function bootstrapAccounts(): Promise<void> {
     return;
   }
 
-  const passwordHash = await hashPassword(env.FIRST_SUPERVISOR_PASSWORD);
+  const passwordHash = await hashPassword(password);
   await createUser({
     email,
     passwordHash,
