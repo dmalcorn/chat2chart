@@ -35,3 +35,8 @@
 - `parseCookies` doesn't URL-decode cookie values — JWTs use base64url so no impact currently
 - `DATABASE_URL` rejects `postgres://` scheme alias — Railway uses `postgresql://`, but some providers emit `postgres://`
 - SESSION_SECRET used directly as HMAC key without HKDF derivation — acceptable for MVP demo
+
+## Deferred from: code review of 1-4-llm-provider-registry-and-claude-provider (2026-04-08)
+
+- Consecutive same-role messages not validated in `buildMessages()` — Anthropic API rejects these, but validation is caller responsibility (Epic 3 interview agent controls conversation history)
+- Partial stream tokens irrecoverable on mid-stream error — inherent to AsyncIterable design, would require different streaming abstraction. Not actionable for MVP

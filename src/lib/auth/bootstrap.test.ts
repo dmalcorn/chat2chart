@@ -71,8 +71,7 @@ describe('bootstrapAccounts', () => {
 
   it('skips when env vars are not set', async () => {
     const originalEmail = env.FIRST_SUPERVISOR_EMAIL;
-    // @ts-expect-error — testing missing env var
-    env.FIRST_SUPERVISOR_EMAIL = undefined;
+    (env as Record<string, unknown>).FIRST_SUPERVISOR_EMAIL = undefined;
 
     await bootstrapAccounts();
 
