@@ -40,3 +40,12 @@
 
 - Consecutive same-role messages not validated in `buildMessages()` — Anthropic API rejects these, but validation is caller responsibility (Epic 3 interview agent controls conversation history)
 - Partial stream tokens irrecoverable on mid-stream error — inherent to AsyncIterable design, would require different streaming abstraction. Not actionable for MVP
+
+## Deferred from: code review of Epic 1 (2026-04-09)
+
+- `ANTHROPIC_API_KEY` defaults to empty string in env schema — no startup warning when API key is unset; failure surfaces only at first LLM call. Consider adding a startup check or log warning when key is empty outside test mode.
+- Bootstrap race condition on concurrent cold start — `bootstrapAccounts()` uses check-then-insert without `ON CONFLICT DO NOTHING`; second worker process would crash on unique constraint. MVP is single instance.
+- `streamResponse` retry restarts entire stream from scratch — if a mid-stream retry succeeds, duplicate content is yielded to the consumer. No deduplication mechanism exists in AsyncIterable design.
+- `nodeType` and `role` are free-form `text()` columns with no DB-level enum constraint — unlike `interviewStatus`/`exchangeType`/`speaker` which use `pgEnum`. Invalid values can be inserted via direct DB access.
+- `drizzle-kit` installed at `0.31.10` vs spec's `0.45.x` — `0.45.x` does not exist; `approved-tech-stack.md` not formally amended to reflect actual version.
+- `interviewExchanges` and `synthesisCheckpoints` tables missing `updatedAt` — by design (immutable/write-once), but AC5 says "every table" without exceptions.

@@ -83,6 +83,8 @@ class ClaudeProvider implements LLMProvider {
       } catch (error) {
         if (attempt < MAX_RETRIES && this.isRetryable(error)) {
           await this.delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        } else if (!this.isRetryable(error)) {
+          throw error;
         } else {
           break;
         }
@@ -119,6 +121,8 @@ class ClaudeProvider implements LLMProvider {
       } catch (error) {
         if (attempt < MAX_RETRIES && this.isRetryable(error)) {
           await this.delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        } else if (!this.isRetryable(error)) {
+          throw error;
         } else {
           break;
         }

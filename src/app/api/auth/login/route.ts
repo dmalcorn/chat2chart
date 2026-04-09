@@ -92,10 +92,10 @@ export async function POST(request: NextRequest) {
     const token = await createSession({
       userId: user.id,
       email: user.email,
-      role: 'supervisor',
+      role: user.role as 'pm' | 'supervisor',
     });
 
-    const response = NextResponse.json({ data: { role: 'supervisor' } }, { status: 200 });
+    const response = NextResponse.json({ data: { role: user.role } }, { status: 200 });
 
     setSessionCookie(response, token);
     return response;

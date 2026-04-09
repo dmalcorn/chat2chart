@@ -71,7 +71,7 @@ export async function updateInterviewStatus(
     .set({ status })
     .where(eq(interviews.id, interviewId))
     .returning();
-  return updated;
+  return updated ?? null;
 }
 
 export async function getUserByEmail(email: string) {
@@ -97,6 +97,7 @@ export async function isEmailInSupervisorAllowlist(email: string): Promise<boole
     with: { projectSupervisors: true },
   });
   if (!user) return false;
+  if (user.role !== 'supervisor') return false;
   return (user.projectSupervisors?.length ?? 0) > 0;
 }
 

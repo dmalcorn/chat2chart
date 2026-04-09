@@ -289,6 +289,19 @@ Claude Opus 4.6 (1M context)
 - [x] [Review][Defer] `DATABASE_URL` rejects `postgres://` scheme alias — deferred, Railway uses `postgresql://`
 - [x] [Review][Defer] SESSION_SECRET without HKDF key derivation — deferred, acceptable for MVP
 
+### Review Findings (Epic 1 Review — 2026-04-09)
+
+#### Patches
+
+- [x] [Review][Patch] Login route hardcoded `role: 'supervisor'` in session instead of reading `user.role` — fixed to use `user.role` [src/app/api/auth/login/route.ts:95]
+- [x] [Review][Patch] `SessionPayload.role` type widened from `'supervisor'` to `'pm' | 'supervisor'` [src/lib/auth/session.ts:12]
+- [x] [Review][Patch] Bootstrap silently no-ops when only one `FIRST_SUPERVISOR_*` var is set — added warning log [src/lib/auth/bootstrap.ts:8-12]
+
+#### Deferred
+
+- [x] [Review][Defer] `ANTHROPIC_API_KEY` defaults to empty string — silent misconfiguration until first LLM call [src/lib/env-schema.ts] — deferred, startup warning for future story
+- [x] [Review][Defer] Bootstrap race condition on concurrent cold start — no `ON CONFLICT` [src/lib/auth/bootstrap.ts] — deferred, MVP single instance
+
 ### Change Log
 
 - 2026-04-08: Implemented Story 1.3 — all 10 tasks complete

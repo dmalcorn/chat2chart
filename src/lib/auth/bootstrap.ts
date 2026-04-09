@@ -3,7 +3,17 @@ import { hashPassword } from './config';
 import { getUserByEmail, createUser } from '@/lib/db/queries';
 
 export async function bootstrapAccounts(): Promise<void> {
-  if (!env.FIRST_SUPERVISOR_EMAIL || !env.FIRST_SUPERVISOR_PASSWORD) {
+  const hasEmail = !!env.FIRST_SUPERVISOR_EMAIL;
+  const hasPassword = !!env.FIRST_SUPERVISOR_PASSWORD;
+
+  if (hasEmail !== hasPassword) {
+    console.warn(
+      'Bootstrap: both FIRST_SUPERVISOR_EMAIL and FIRST_SUPERVISOR_PASSWORD must be set together. Skipping bootstrap.',
+    );
+    return;
+  }
+
+  if (!hasEmail) {
     return;
   }
 

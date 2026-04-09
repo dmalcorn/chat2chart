@@ -60,7 +60,10 @@ function getDefaultModelForProvider(providerName: string): string {
   if (providerName === 'anthropic') {
     return 'claude-sonnet-4-20250514';
   }
-  return 'unknown';
+  throw new ProviderResolutionError(
+    `No default model configured for provider: ${providerName}`,
+    'PROVIDER_NOT_FOUND',
+  );
 }
 
 export class ProviderResolutionError extends Error {

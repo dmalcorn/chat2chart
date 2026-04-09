@@ -1,6 +1,6 @@
 # Story 1.2: Database Schema & Connection
 
-Status: review
+Status: done
 
 ## Story
 
@@ -345,3 +345,16 @@ Claude Opus 4.6 (1M context)
 - [x] [Review][Defer] Module-level side effect in `connection.ts` — crashes if `DATABASE_URL` unset at import time. Story 1.3 env validation addresses this [src/lib/db/connection.ts]
 - [x] [Review][Defer] No connection pool lifecycle management — no `.end()` exported, no pool config. Acceptable for MVP dev [src/lib/db/connection.ts]
 - [x] [Review][Defer] `interviewExchanges` missing DB constraint for one-verified-per-segment rule — will be enforced at service level in future story [src/lib/db/schema.ts]
+
+### Review Findings (Epic 1 Review — 2026-04-09)
+
+#### Patches
+
+- [x] [Review][Patch] `connection.ts` reads `process.env.DATABASE_URL` directly — switched to `env.DATABASE_URL` from `@/lib/env` [src/lib/db/connection.ts]
+- [x] [Review][Patch] `updateInterviewStatus` returns `undefined` when no row matches — now returns `null` explicitly [src/lib/db/queries.ts:74]
+- [x] [Review][Patch] `isEmailInSupervisorAllowlist` doesn't verify supervisor role — added `user.role !== 'supervisor'` check [src/lib/db/queries.ts:99]
+
+#### Deferred
+
+- [x] [Review][Defer] `nodeType` and `role` are free-form `text()` columns — no DB-level enum constraint [src/lib/db/schema.ts] — deferred, enforce at service layer
+- [x] [Review][Defer] `interviewExchanges`/`synthesisCheckpoints` missing `updatedAt` — by design (immutable), AC5 wording needs amendment [src/lib/db/schema.ts]

@@ -8,7 +8,7 @@ const SESSION_MAX_AGE = 86400; // 24 hours in seconds
 export interface SessionPayload {
   userId: string;
   email: string;
-  role: 'supervisor';
+  role: 'pm' | 'supervisor';
   iat: number;
   exp: number;
 }
@@ -20,7 +20,7 @@ function getSecretKey(): Uint8Array {
 export async function createSession(payload: {
   userId: string;
   email: string;
-  role: 'supervisor';
+  role: 'pm' | 'supervisor';
 }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })

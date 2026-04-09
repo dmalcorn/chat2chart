@@ -1,6 +1,6 @@
 # Story 1.4: LLM Provider Registry & Claude Provider
 
-Status: review
+Status: done
 
 ## Story
 
@@ -15,7 +15,7 @@ So that AI features can call the provider registry without importing SDKs direct
 3. **Given** the registry exists, **When** Claude is requested, **Then** `src/lib/ai/claude-provider.ts` implements `LLMProvider` using `@anthropic-ai/sdk` 0.85.0
 4. **Given** the Claude provider, **When** checking imports across the codebase, **Then** `@anthropic-ai/sdk` is imported ONLY in `src/lib/ai/` (service boundary enforced)
 5. **Given** the provider, **When** any LLM call is made, **Then** it executes server-side only — no API keys exposed to client (MVP-NFR6)
-6. **Given** the provider supports streaming, **When** `streamResponse` is called, **Then** it yields tokens compatible with the SSE event format (`message`, `done`, `error`)
+6. **Given** the provider supports streaming, **When** `streamResponse` is called, **Then** it yields raw text tokens suitable for SSE wrapping by the route handler
 7. **Given** the provider, **When** a call fails, **Then** it retries once with exponential backoff before throwing
 
 ## Tasks / Subtasks
@@ -249,6 +249,19 @@ Placeholder files NOT created by this story (deferred to Epic 3):
 - [x] [Review][Patch] Missing `streamResponse` retry tests — added 2 tests: retry-then-succeed and retry-exhaustion. [claude-provider.test.ts]
 - [x] [Review][Defer] Consecutive same-role messages not validated in `buildMessages()` — Anthropic API rejects these, but validation is caller responsibility (Epic 3 interview agent). [claude-provider.ts:121-135] — deferred, not introduced by this story
 - [x] [Review][Defer] Partial stream tokens irrecoverable on mid-stream error — inherent to AsyncIterable design, would require different streaming abstraction. Not actionable for MVP.
+
+### Review Findings (Epic 1 Review — 2026-04-09)
+
+#### Patches
+
+- [x] [Review][Patch] `sendMessage`/`streamResponse` retry swallows non-retryable errors into generic message — now re-throws original error on 4xx [src/lib/ai/claude-provider.ts:87,125]
+- [x] [Review][Patch] `getDefaultModelForProvider` returns `'unknown'` for unrecognized providers — now throws `ProviderResolutionError` [src/lib/ai/provider-registry.ts:62]
+- [x] [Review][Patch] AC6 amended — `streamResponse` yields raw text tokens; SSE framing is route handler responsibility [1-4 spec AC6]
+
+#### Deferred
+
+- [x] [Review][Defer] `streamResponse` retry restarts entire stream — duplicate content on mid-stream retry success [src/lib/ai/claude-provider.ts] — deferred, inherent to AsyncIterable design
+- [x] [Review][Defer] `drizzle-kit` at `0.31.10` vs spec's `0.45.x` — approved-tech-stack.md not formally amended [package.json] — deferred, documentation update
 
 ## Dev Agent Record
 
