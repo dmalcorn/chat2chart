@@ -1,11 +1,13 @@
 import { and, asc, count, desc, eq, max } from 'drizzle-orm';
 import { db } from './connection';
 import {
+  individualProcessSchemas,
   interviews,
   interviewExchanges,
   interviewTokens,
   processNodes,
   projects,
+  synthesisCheckpoints,
   synthesisResults,
   users,
 } from './schema';
@@ -169,7 +171,83 @@ export async function getMaxSequenceNumber(interviewId: string): Promise<number>
     .select({ value: max(interviewExchanges.sequenceNumber) })
     .from(interviewExchanges)
     .where(eq(interviewExchanges.interviewId, interviewId));
-  return result?.value ?? 0;
+  return Number(result?.value ?? 0);
+}
+
+export async function getLatestVerifiableExchangeInSegment(interviewId: string, segmentId: string) {
+  const results = await db
+    .select()
+    .from(interviewExchanges)
+    .where(
+      and(
+        eq(interviewExchanges.interviewId, interviewId),
+        eq(interviewExchanges.segmentId, segmentId),
+      ),
+    )
+    .orderBy(desc(interviewExchanges.sequenceNumber))
+    .limit(10);
+  return (
+    results.find(
+      (ex) =>
+        (ex.exchangeType === 'reflective_summary' || ex.exchangeType === 'revised_summary') &&
+        !ex.isVerified,
+    ) ?? null
+  );
+}
+
+// --- Individual Process Schema Queries ---
+
+export async function getVerifiedExchangesByInterviewId(interviewId: string) {
+  return db.query.interviewExchanges.findMany({
+    where: and(
+      eq(interviewExchanges.interviewId, interviewId),
+      eq(interviewExchanges.isVerified, true),
+    ),
+    orderBy: [asc(interviewExchanges.sequenceNumber)],
+  });
+}
+
+export async function getIndividualProcessSchemaByInterviewId(interviewId: string) {
+  const result = await db.query.individualProcessSchemas.findFirst({
+    where: eq(individualProcessSchemas.interviewId, interviewId),
+  });
+  return result ?? null;
+}
+
+export async function createIndividualProcessSchema(data: {
+  interviewId: string;
+  processNodeId: string;
+  schemaJson: unknown;
+  mermaidDefinition: string;
+  validationStatus: string;
+  extractionMethod: string;
+}) {
+  const [schema] = await db.insert(individualProcessSchemas).values(data).returning();
+  return schema;
+}
+
+export async function updateIndividualProcessSchemaValidation(
+  schemaId: string,
+  validationStatus: string,
+) {
+  const [updated] = await db
+    .update(individualProcessSchemas)
+    .set({ validationStatus })
+    .where(eq(individualProcessSchemas.id, schemaId))
+    .returning();
+  return updated ?? null;
+}
+
+export async function updateIndividualProcessSchema(
+  schemaId: string,
+  data: { schemaJson: unknown; mermaidDefinition: string; validationStatus: string },
+) {
+  const [updated] = await db
+    .update(individualProcessSchemas)
+    .set(data)
+    .where(eq(individualProcessSchemas.id, schemaId))
+    .returning();
+  return updated ?? null;
 }
 
 export async function updateInterviewStatusWithTimestamps(
@@ -183,4 +261,85 @@ export async function updateInterviewStatusWithTimestamps(
     .where(eq(interviews.id, interviewId))
     .returning();
   return updated ?? null;
+}
+
+// --- Synthesis Queries ---
+
+export async function getCapturedInterviewsByNodeId(nodeId: string) {
+  return db.query.interviews.findMany({
+    where: and(eq(interviews.processNodeId, nodeId), eq(interviews.status, 'captured')),
+  });
+}
+
+export async function getIndividualSchemasByNodeId(nodeId: string) {
+  const schemas = await db
+    .select({
+      id: individualProcessSchemas.id,
+      interviewId: individualProcessSchemas.interviewId,
+      processNodeId: individualProcessSchemas.processNodeId,
+      schemaJson: individualProcessSchemas.schemaJson,
+      mermaidDefinition: individualProcessSchemas.mermaidDefinition,
+      validationStatus: individualProcessSchemas.validationStatus,
+      extractionMethod: individualProcessSchemas.extractionMethod,
+      createdAt: individualProcessSchemas.createdAt,
+      updatedAt: individualProcessSchemas.updatedAt,
+      interviewStatus: interviews.status,
+    })
+    .from(individualProcessSchemas)
+    .innerJoin(interviews, eq(individualProcessSchemas.interviewId, interviews.id))
+    .where(
+      and(eq(individualProcessSchemas.processNodeId, nodeId), eq(interviews.status, 'captured')),
+    );
+  return schemas;
+}
+
+export async function createSynthesisCheckpoint(data: {
+  projectId: string;
+  processNodeId: string;
+  synthesisVersion: number;
+  stage: string;
+  resultJson: unknown;
+  durationMs?: number;
+}) {
+  const [checkpoint] = await db.insert(synthesisCheckpoints).values(data).returning();
+  return checkpoint;
+}
+
+export async function createSynthesisResult(data: {
+  projectId: string;
+  processNodeId: string;
+  synthesisVersion: number;
+  workflowJson: unknown;
+  interviewCount: number;
+}) {
+  const [result] = await db.insert(synthesisResults).values(data).returning();
+  return result;
+}
+
+export async function getLatestSynthesisVersion(nodeId: string): Promise<number> {
+  const [result] = await db
+    .select({ value: max(synthesisResults.synthesisVersion) })
+    .from(synthesisResults)
+    .where(eq(synthesisResults.processNodeId, nodeId));
+  return result?.value ?? 0;
+}
+
+export async function getIntervieweeNamesByInterviewIds(
+  interviewIds: string[],
+): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  for (const interviewId of interviewIds) {
+    const interview = await db.query.interviews.findFirst({
+      where: eq(interviews.id, interviewId),
+    });
+    if (interview) {
+      const token = await db.query.interviewTokens.findFirst({
+        where: eq(interviewTokens.id, interview.tokenId),
+      });
+      if (token) {
+        names.set(interviewId, token.intervieweeName);
+      }
+    }
+  }
+  return names;
 }

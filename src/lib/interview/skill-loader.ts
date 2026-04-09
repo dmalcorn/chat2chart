@@ -127,6 +127,11 @@ const skillCache = new Map<string, SkillDefinition>();
 export async function loadSkill(skillName: string): Promise<SkillDefinition> {
   const cached = skillCache.get(skillName);
   if (cached) return cached;
+
+  if (skillName.includes('..') || skillName.includes('/') || skillName.includes('\\')) {
+    throw new SkillNotFoundError(skillName);
+  }
+
   const skillDir = path.join(process.cwd(), 'skills', skillName);
 
   try {

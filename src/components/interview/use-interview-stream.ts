@@ -9,7 +9,8 @@ export type MessageType =
   | 'speech_card'
   | 'reflective_summary'
   | 'typing_indicator'
-  | 'processing_indicator';
+  | 'processing_indicator'
+  | 'system_error';
 
 export type SummaryState =
   | 'streaming'
@@ -171,7 +172,7 @@ export function useInterviewStream(token: string) {
             type: 'ADD_MESSAGE',
             payload: {
               id: crypto.randomUUID(),
-              type: 'agent_question',
+              type: 'system_error',
               content: 'The assistant is temporarily unavailable. Trying again...',
               segmentId: '',
               timestamp: new Date().toISOString(),
@@ -195,20 +196,25 @@ export function useInterviewStream(token: string) {
           buffer = remainder;
 
           for (const sseEvent of events) {
-            if (sseEvent.event === 'message') {
+            if (sseEvent.event === 'type') {
               const parsed = JSON.parse(sseEvent.data) as {
-                content: string;
-                exchangeType?: string;
+                exchangeType: string;
               };
+              activeMessageType =
+                parsed.exchangeType === 'reflective_summary'
+                  ? 'reflective_summary'
+                  : 'agent_question';
+            } else if (sseEvent.event === 'message') {
+              const parsed = JSON.parse(sseEvent.data) as { content: string };
 
               if (!activeMessageId) {
                 dispatch({ type: 'SET_TYPING', payload: false });
                 dispatch({ type: 'SET_PROCESSING', payload: false });
 
-                activeMessageType =
-                  parsed.exchangeType === 'reflective_summary'
-                    ? 'reflective_summary'
-                    : 'agent_question';
+                // Use type from prior 'type' event, default to agent_question
+                if (!activeMessageType) {
+                  activeMessageType = 'agent_question';
+                }
 
                 activeMessageId = crypto.randomUUID();
                 dispatch({
@@ -272,7 +278,7 @@ export function useInterviewStream(token: string) {
                 type: 'ADD_MESSAGE',
                 payload: {
                   id: crypto.randomUUID(),
-                  type: 'agent_question',
+                  type: 'system_error',
                   content: parsed.message,
                   segmentId: '',
                   timestamp: new Date().toISOString(),
@@ -307,17 +313,95 @@ export function useInterviewStream(token: string) {
         const response = await fetch(`/api/interview/${token}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: 'confirmed' }),
+          body: JSON.stringify({ message: 'confirmed', exchangeType: 'confirmation' }),
         });
 
-        if (response.ok) {
-          dispatch({
-            type: 'SET_SUMMARY_STATE_BY_SEGMENT',
-            payload: { segmentId, summaryState: 'confirmed' },
-          });
+        if (!response.ok || !response.body) {
+          // User can retry
+          return;
+        }
+
+        dispatch({
+          type: 'SET_SUMMARY_STATE_BY_SEGMENT',
+          payload: { segmentId, summaryState: 'confirmed' },
+        });
+
+        // D2: Consume the SSE stream — agent sends a follow-up question
+        dispatch({ type: 'SET_TYPING', payload: true });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let activeMessageId: string | null = null;
+        let activeMessageType: MessageType | null = null;
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const { events, remainder } = parseSSEChunk(buffer);
+          buffer = remainder;
+
+          for (const sseEvent of events) {
+            if (sseEvent.event === 'type') {
+              const parsed = JSON.parse(sseEvent.data) as { exchangeType: string };
+              activeMessageType =
+                parsed.exchangeType === 'reflective_summary'
+                  ? 'reflective_summary'
+                  : 'agent_question';
+            } else if (sseEvent.event === 'message') {
+              const parsed = JSON.parse(sseEvent.data) as { content: string };
+              if (!activeMessageId) {
+                dispatch({ type: 'SET_TYPING', payload: false });
+                if (!activeMessageType) activeMessageType = 'agent_question';
+                activeMessageId = crypto.randomUUID();
+                dispatch({
+                  type: 'ADD_MESSAGE',
+                  payload: {
+                    id: activeMessageId,
+                    type: activeMessageType,
+                    content: parsed.content,
+                    segmentId: '',
+                    summaryState:
+                      activeMessageType === 'reflective_summary' ? 'streaming' : undefined,
+                    timestamp: new Date().toISOString(),
+                  },
+                });
+              } else {
+                dispatch({
+                  type: 'APPEND_STREAMING_CONTENT',
+                  payload: { id: activeMessageId, content: parsed.content },
+                });
+              }
+            } else if (sseEvent.event === 'done') {
+              const parsed = JSON.parse(sseEvent.data) as {
+                interviewExchangeId: string;
+                segmentId: string;
+              };
+              if (activeMessageId) {
+                dispatch({
+                  type: 'PATCH_MESSAGE',
+                  payload: { id: activeMessageId, patch: { segmentId: parsed.segmentId } },
+                });
+                if (activeMessageType === 'reflective_summary') {
+                  dispatch({
+                    type: 'SET_SUMMARY_STATE_BY_ID',
+                    payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
+                  });
+                }
+              }
+              dispatch({ type: 'SET_TYPING', payload: false });
+              activeMessageId = null;
+              activeMessageType = null;
+            } else if (sseEvent.event === 'error') {
+              dispatch({ type: 'SET_TYPING', payload: false });
+              activeMessageId = null;
+              activeMessageType = null;
+            }
+          }
         }
       } catch {
-        // User can retry
+        dispatch({ type: 'SET_TYPING', payload: false });
       }
     },
     [token],
@@ -335,7 +419,10 @@ export function useInterviewStream(token: string) {
         const response = await fetch(`/api/interview/${token}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: 'correction_requested' }),
+          body: JSON.stringify({
+            message: "That's not quite right. Please revise your summary.",
+            exchangeType: 'confirmation',
+          }),
         });
 
         if (!response.ok || !response.body) {
@@ -346,6 +433,7 @@ export function useInterviewStream(token: string) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let activeMessageId: string | null = null;
+        let activeMessageType: MessageType | null = null;
         let buffer = '';
 
         while (true) {
@@ -357,20 +445,29 @@ export function useInterviewStream(token: string) {
           buffer = remainder;
 
           for (const sseEvent of events) {
-            if (sseEvent.event === 'message') {
+            if (sseEvent.event === 'type') {
+              const parsed = JSON.parse(sseEvent.data) as { exchangeType: string };
+              activeMessageType =
+                parsed.exchangeType === 'reflective_summary'
+                  ? 'reflective_summary'
+                  : 'agent_question';
+            } else if (sseEvent.event === 'message') {
               const parsed = JSON.parse(sseEvent.data) as { content: string };
 
               if (!activeMessageId) {
                 dispatch({ type: 'SET_TYPING', payload: false });
+                // Corrections expect a revised summary from the agent
+                if (!activeMessageType) activeMessageType = 'reflective_summary';
                 activeMessageId = crypto.randomUUID();
                 dispatch({
                   type: 'ADD_MESSAGE',
                   payload: {
                     id: activeMessageId,
-                    type: 'reflective_summary',
+                    type: activeMessageType,
                     content: parsed.content,
                     segmentId,
-                    summaryState: 'streaming',
+                    summaryState:
+                      activeMessageType === 'reflective_summary' ? 'streaming' : undefined,
                     timestamp: new Date().toISOString(),
                   },
                 });
@@ -381,17 +478,36 @@ export function useInterviewStream(token: string) {
                 });
               }
             } else if (sseEvent.event === 'done') {
+              const parsed = JSON.parse(sseEvent.data) as {
+                interviewExchangeId: string;
+                segmentId: string;
+              };
+              if (activeMessageId) {
+                dispatch({
+                  type: 'PATCH_MESSAGE',
+                  payload: { id: activeMessageId, patch: { segmentId: parsed.segmentId } },
+                });
+                if (activeMessageType === 'reflective_summary') {
+                  dispatch({
+                    type: 'SET_SUMMARY_STATE_BY_ID',
+                    payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
+                  });
+                }
+              }
+              dispatch({ type: 'SET_TYPING', payload: false });
+              activeMessageId = null;
+              activeMessageType = null;
+            } else if (sseEvent.event === 'error') {
+              dispatch({ type: 'SET_TYPING', payload: false });
+              // Clean up partially-added card stuck in streaming state
               if (activeMessageId) {
                 dispatch({
                   type: 'SET_SUMMARY_STATE_BY_ID',
                   payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
                 });
               }
-              dispatch({ type: 'SET_TYPING', payload: false });
               activeMessageId = null;
-            } else if (sseEvent.event === 'error') {
-              dispatch({ type: 'SET_TYPING', payload: false });
-              activeMessageId = null;
+              activeMessageType = null;
             }
           }
         }

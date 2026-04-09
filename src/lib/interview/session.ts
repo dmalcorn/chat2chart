@@ -69,11 +69,22 @@ export async function addExchange(session: InterviewSession, data: AddExchangeDa
   return exchange;
 }
 
-export async function verifyExchange(exchangeId: string, exchangeType: ExchangeType) {
+export async function verifyExchange(
+  exchangeId: string,
+  exchangeType: ExchangeType,
+  interviewId?: string,
+) {
   if (!VERIFIABLE_TYPES.has(exchangeType)) {
     throw new Error(
       `Cannot verify exchange of type "${exchangeType}". Only reflective_summary and revised_summary can be verified.`,
     );
+  }
+  if (interviewId) {
+    const exchanges = await getInterviewExchangesByInterviewId(interviewId);
+    const exchange = exchanges.find((ex) => ex.id === exchangeId);
+    if (!exchange) {
+      throw new Error(`Exchange ${exchangeId} not found in interview ${interviewId}`);
+    }
   }
   return updateExchangeVerification(exchangeId, true);
 }

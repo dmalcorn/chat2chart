@@ -8,6 +8,8 @@ import {
   getInterviewExchangesByInterviewId,
   createInterviewExchange,
   getMaxSequenceNumber,
+  getLatestVerifiableExchangeInSegment,
+  updateExchangeVerification,
 } from '@/lib/db/queries';
 import { loadSkill } from '@/lib/interview/skill-loader';
 import { assembleInterviewPrompt } from '@/lib/ai/prompts/prompt-assembler';
@@ -129,7 +131,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       );
     }
 
-    const { message } = parsed.data;
+    const { message, exchangeType: userExchangeType } = parsed.data;
 
     const project = await getProjectById(tokenRow.projectId);
     if (!project) {
@@ -162,15 +164,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
         ? lastExchange.segmentId
         : crypto.randomUUID();
 
-    // P1+P3: Persist user message with retry for sequence conflicts
+    // Persist user message with retry for sequence conflicts
     await persistExchangeWithRetry({
       interviewId: interview.id,
       segmentId,
       sequenceNumber: userSequence,
-      exchangeType: 'response',
+      exchangeType: userExchangeType,
       speaker: 'interviewee',
       content: message,
     });
+
+    // D4: If this is a positive confirmation, verify the preceding summary (FR49)
+    if (userExchangeType === 'confirmation' && message.toLowerCase() === 'confirmed') {
+      const verifiable = await getLatestVerifiableExchangeInSegment(interview.id, segmentId);
+      if (verifiable) {
+        await updateExchangeVerification(verifiable.id, true);
+      }
+    }
 
     // Add user message to conversation for LLM
     conversation.push({ role: 'user', content: message });

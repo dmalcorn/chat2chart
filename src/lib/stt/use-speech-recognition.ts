@@ -40,7 +40,11 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const startRecording = useCallback(() => {
     if (!providerRef.current) return;
     setStatus('recording');
-    providerRef.current.startListening();
+    try {
+      providerRef.current.startListening();
+    } catch {
+      setStatus('idle');
+    }
   }, []);
 
   const stopRecording = useCallback(async (): Promise<string> => {

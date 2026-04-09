@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { MicBar } from './mic-bar';
 import type { MicBarMode } from './mic-bar';
 import { ActiveListeningState } from './active-listening-state';
@@ -29,7 +29,19 @@ export function ConversationThread({ token }: ConversationThreadProps) {
 
   const { status: sttStatus, startRecording, stopRecording, isSupported } = useSpeechRecognition();
 
-  const [isTextMode, setIsTextMode] = useState(!isSupported);
+  const [isTextMode, setIsTextMode] = useState(false);
+  const hasInitializedTextMode = useRef(false);
+
+  // Sync text mode with STT support after hydration
+  useEffect(() => {
+    if (!hasInitializedTextMode.current) {
+      hasInitializedTextMode.current = true;
+      if (!isSupported) {
+        setIsTextMode(true);
+      }
+    }
+  }, [isSupported]);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { sentinelRef } = useAutoScroll(scrollContainerRef, [messages, isAgentTyping]);
@@ -84,6 +96,23 @@ export function ConversationThread({ token }: ConversationThreadProps) {
       switch (msg.type) {
         case 'agent_question':
           elements.push(<AgentMessageCard key={msg.id} content={msg.content} />);
+          break;
+        case 'system_error':
+          elements.push(
+            <div key={msg.id} className="flex justify-start">
+              <div
+                className="max-w-[75%] rounded-lg border px-4 py-3 text-sm"
+                style={{
+                  backgroundColor: 'var(--destructive-soft)',
+                  borderColor: 'var(--destructive)',
+                  color: 'var(--destructive)',
+                }}
+                role="alert"
+              >
+                {msg.content}
+              </div>
+            </div>,
+          );
           break;
         case 'speech_card':
           elements.push(
