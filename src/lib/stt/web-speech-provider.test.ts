@@ -113,7 +113,7 @@ describe('WebSpeechProvider', () => {
       const provider = new WebSpeechProvider();
       provider.initialize({});
 
-      const callback = vi.fn<[STTTranscriptResult], void>();
+      const callback = vi.fn<(result: STTTranscriptResult) => void>();
       provider.onTranscript(callback);
       provider.startListening();
 
@@ -142,7 +142,7 @@ describe('WebSpeechProvider', () => {
       const provider = new WebSpeechProvider();
       provider.initialize({});
 
-      const callback = vi.fn<[STTTranscriptResult], void>();
+      const callback = vi.fn<(result: STTTranscriptResult) => void>();
       provider.onTranscript(callback);
 
       mockRecognition.onerror?.({ error: 'not-allowed', message: 'Permission denied' });

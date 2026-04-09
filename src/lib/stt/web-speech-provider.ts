@@ -44,7 +44,8 @@ export class WebSpeechProvider implements STTProvider {
     return getSpeechRecognitionConstructor() !== null;
   }
 
-  initialize(): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  initialize(config: { apiKey?: string; options?: Record<string, unknown> }): void {
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) return;
 

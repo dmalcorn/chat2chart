@@ -1,6 +1,6 @@
 # Story 3.6: Individual Process Schema Extraction & Diagram Generation
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -22,19 +22,19 @@ So that I can confirm my knowledge was captured accurately.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Process Schema types `src/lib/schema/workflow.ts` (AC: #1, #5, #8)
-  - [ ] 1.1 Define `IndividualStep` Zod schema with fields: `id` (UUID), `label` (string, verb-phrase), `type` (`'step'` | `'decision'`), `sourceType` (`'interview_discovered'` | `'synthesis_inferred'`), `sourceExchangeIds` (string array — segment IDs of verified summaries that contributed)
-  - [ ] 1.2 Define `IndividualConnection` Zod schema with fields: `from` (step ID), `to` (step ID), `label` (optional string — for decision branch labels like "Yes" / "No")
-  - [ ] 1.3 Define `IndividualProcessSchema` Zod schema with fields: `schemaVersion` (string, e.g. `"1.0"`), `processNodeId` (UUID), `interviewId` (UUID), `steps` (array of `IndividualStep`), `connections` (array of `IndividualConnection`), `metadata` (object: `extractionMethod` (`'programmatic'` | `'llm_fallback'`), `extractedAt` (ISO 8601 string), `stepCount` (number), `decisionPointCount` (number))
-  - [ ] 1.4 Export the Zod schemas and inferred TypeScript types (`IndividualStep`, `IndividualConnection`, `IndividualProcessSchema`)
-  - [ ] 1.5 This file is the single source of truth consumed by extraction, Mermaid generation, and later by synthesis — keep it clean and well-documented
+- [x] Task 1: Create Process Schema types `src/lib/schema/workflow.ts` (AC: #1, #5, #8)
+  - [x] 1.1 Define `IndividualStep` Zod schema with fields: `id` (UUID), `label` (string, verb-phrase), `type` (`'step'` | `'decision'`), `sourceType` (`'interview_discovered'` | `'synthesis_inferred'`), `sourceExchangeIds` (string array — segment IDs of verified summaries that contributed)
+  - [x] 1.2 Define `IndividualConnection` Zod schema with fields: `from` (step ID), `to` (step ID), `label` (optional string — for decision branch labels like "Yes" / "No")
+  - [x] 1.3 Define `IndividualProcessSchema` Zod schema with fields: `schemaVersion` (string, e.g. `"1.0"`), `processNodeId` (UUID), `interviewId` (UUID), `steps` (array of `IndividualStep`), `connections` (array of `IndividualConnection`), `metadata` (object: `extractionMethod` (`'programmatic'` | `'llm_fallback'`), `extractedAt` (ISO 8601 string), `stepCount` (number), `decisionPointCount` (number))
+  - [x] 1.4 Export the Zod schemas and inferred TypeScript types (`IndividualStep`, `IndividualConnection`, `IndividualProcessSchema`)
+  - [x] 1.5 This file is the single source of truth consumed by extraction, Mermaid generation, and later by synthesis — keep it clean and well-documented
 
-- [ ] Task 2: Create NLP extraction pipeline `src/lib/interview/schema-extractor.ts` (AC: #1, #2, #3, #4)
-  - [ ] 2.1 Import `compromise` (v14.15.0) — this is the ONLY file that may import it (service boundary)
-  - [ ] 2.2 Implement `extractProcessSchema(verifiedSummaries: VerifiedSummary[], context: ExtractionContext): Promise<IndividualProcessSchema>` where:
+- [x] Task 2: Create NLP extraction pipeline `src/lib/interview/schema-extractor.ts` (AC: #1, #2, #3, #4)
+  - [x] 2.1 Import `compromise` (v14.15.0) — this is the ONLY file that may import it (service boundary)
+  - [x] 2.2 Implement `extractProcessSchema(verifiedSummaries: VerifiedSummary[], context: ExtractionContext): Promise<IndividualProcessSchema>` where:
     - `VerifiedSummary` = `{ exchangeId: string; segmentId: string; content: string; sequenceNumber: number }` — the confirmed reflective/revised summaries from the interview
     - `ExtractionContext` = `{ interviewId: string; processNodeId: string; projectId: string }` — context needed for schema metadata and LLM fallback
-  - [ ] 2.3 Implement programmatic NLP extraction function `extractProgrammatic(summaries: VerifiedSummary[]): IndividualProcessSchema`:
+  - [x] 2.3 Implement programmatic NLP extraction function `extractProgrammatic(summaries: VerifiedSummary[]): IndividualProcessSchema`:
     - Use `compromise(text)` on each verified summary
     - Extract verb-object pairs via `.verbs()` and `.nouns()` to identify process steps (label = verb + object, e.g. "Scan documents", "Sort mail")
     - Detect temporal sequence from conversational position (summary order) and temporal markers ("first", "then", "next", "after", "finally", "before")
@@ -43,66 +43,66 @@ So that I can confirm my knowledge was captured accurately.
     - Build connections array based on sequential order, with decision branches getting labeled connections
     - Set `sourceType: 'interview_discovered'` on all steps (these come from verified summaries)
     - Populate `sourceExchangeIds` with the segment IDs of the summaries that contributed to each step
-  - [ ] 2.4 Implement quality gate function `runQualityGate(schema: unknown): QualityGateResult`:
+  - [x] 2.4 Implement quality gate function `runQualityGate(schema: unknown): QualityGateResult`:
     - **Structural check:** Parse with `IndividualProcessSchema` Zod schema via `.safeParse()` — must succeed
     - **Completeness check:** `schema.steps.length >= Math.ceil(summaries.length / 2)` — at least 1 step per 2 confirmed summaries
     - **Richness check:** If any verified summary contains conditional language (if/when/depends/unless/sometimes), then `schema.metadata.decisionPointCount >= 1`
     - Return `{ passed: boolean; checks: { structural: boolean; completeness: boolean; richness: boolean }; scores: { stepCount: number; decisionPointCount: number; summaryCount: number } }`
-  - [ ] 2.5 Implement LLM fallback function `extractViaLlm(summaries: VerifiedSummary[], context: ExtractionContext): Promise<IndividualProcessSchema>`:
+  - [x] 2.5 Implement LLM fallback function `extractViaLlm(summaries: VerifiedSummary[], context: ExtractionContext): Promise<IndividualProcessSchema>`:
     - Resolve the LLM provider via `provider-registry.ts` for the project's `interview_agent` skill
     - Send the verified summaries as input with a system prompt requesting Process Schema JSON output
     - Use structured output mode (Zod schema → JSON Schema) to constrain the LLM response to valid `IndividualProcessSchema`
     - Set `extractionMethod: 'llm_fallback'` in metadata
     - Validate LLM output with Zod before returning — if LLM also fails, throw an error (this is an exceptional case; the interviewee would see the diagram generation loading state fail)
-  - [ ] 2.6 Implement the orchestration in `extractProcessSchema()`:
+  - [x] 2.6 Implement the orchestration in `extractProcessSchema()`:
     - Call `extractProgrammatic()` first
     - Run `runQualityGate()` on the result
     - If quality gate passes → return programmatic result
     - If quality gate fails → call `extractViaLlm()` transparently (no user notification)
     - Log extraction attempt with: method used (`programmatic` or `llm_fallback`), quality gate results (pass/fail per check with scores), extraction duration in ms, step count produced
-  - [ ] 2.7 The extractor does NOT import Drizzle — it receives verified summaries as input and returns a schema as output. DB operations happen in the calling route handler
+  - [x] 2.7 The extractor does NOT import Drizzle — it receives verified summaries as input and returns a schema as output. DB operations happen in the calling route handler
 
-- [ ] Task 3: Create Mermaid diagram generator `src/lib/interview/individual-mermaid-generator.ts` (AC: #5)
-  - [ ] 3.1 Implement `generateIndividualMermaid(schema: IndividualProcessSchema): string` that converts Process Schema JSON to a Mermaid.js flowchart definition string
-  - [ ] 3.2 Use `flowchart TD` (top-down/vertical) orientation
-  - [ ] 3.3 Render steps as rounded rectangles: `nodeId("Step Label")` — Mermaid's `()` syntax produces rounded rectangles
-  - [ ] 3.4 Render decision points as diamonds: `nodeId{"Decision Label?"}` — Mermaid's `{}` syntax produces diamonds
-  - [ ] 3.5 Render connections as arrows: `nodeA --> nodeB` for unlabeled, `nodeA -->|"Yes"| nodeB` for labeled (decision branches)
-  - [ ] 3.6 Generate sanitized node IDs from step IDs (replace hyphens with underscores, prefix with `s_` to avoid Mermaid reserved words)
-  - [ ] 3.7 Implement `generateTextAlternative(schema: IndividualProcessSchema): string` — produces a structured plain-text description of the process for the `<details><summary>` accessibility fallback:
+- [x] Task 3: Create Mermaid diagram generator `src/lib/interview/individual-mermaid-generator.ts` (AC: #5)
+  - [x] 3.1 Implement `generateIndividualMermaid(schema: IndividualProcessSchema): string` that converts Process Schema JSON to a Mermaid.js flowchart definition string
+  - [x] 3.2 Use `flowchart TD` (top-down/vertical) orientation
+  - [x] 3.3 Render steps as rounded rectangles: `nodeId("Step Label")` — Mermaid's `()` syntax produces rounded rectangles
+  - [x] 3.4 Render decision points as diamonds: `nodeId{"Decision Label?"}` — Mermaid's `{}` syntax produces diamonds
+  - [x] 3.5 Render connections as arrows: `nodeA --> nodeB` for unlabeled, `nodeA -->|"Yes"| nodeB` for labeled (decision branches)
+  - [x] 3.6 Generate sanitized node IDs from step IDs (replace hyphens with underscores, prefix with `s_` to avoid Mermaid reserved words)
+  - [x] 3.7 Implement `generateTextAlternative(schema: IndividualProcessSchema): string` — produces a structured plain-text description of the process for the `<details><summary>` accessibility fallback:
     - "Process: [process name]"
     - "Steps: 1. [Step label] 2. [Step label] ..."
     - "Decision points: [Decision label] — [branch labels]"
     - "Flow: [Step 1] leads to [Step 2] leads to ..."
 
-- [ ] Task 4: Create DiagramCanvas component `src/components/diagram/diagram-canvas.tsx` (AC: #6, #7)
-  - [ ] 4.1 Create as a Client Component (`"use client"`) — Mermaid.js requires browser DOM
-  - [ ] 4.2 Props: `mermaidDefinition: string`, `textAlternative: string`, `isLoading?: boolean`, `onConfirm?: () => void`, `onReject?: () => void`, `variant: 'individual-interview' | 'individual-carousel' | 'synthesis'`
-  - [ ] 4.3 Use `src/hooks/use-mermaid.ts` hook (create in Task 5) to render the Mermaid definition into SVG
-  - [ ] 4.4 Layout: `max-width: 700px` for individual variants, full panel width for synthesis variant. Background `--card`. Border radius 12px (`--radius-lg`). Shadow `--shadow-md`
-  - [ ] 4.5 Pan/zoom controls: absolute-positioned top-right overlay with `+`, `-`, `Fit` buttons (36px each). Pan via click-drag on diagram. Zoom via scroll wheel or +/- buttons. Fit resets to show full diagram
-  - [ ] 4.6 Implement pan/zoom with CSS `transform: translate(x, y) scale(s)` on the diagram container, tracking state with `useState`
-  - [ ] 4.7 Text alternative: render `<details><summary>View text description</summary><p>{textAlternative}</p></details>` below the diagram canvas
-  - [ ] 4.8 Loading state (`isLoading=true`): display "Let me put together what you described..." agent message with pulsing placeholder animation (pulse CSS animation on a card-sized placeholder, 2-5 sec duration)
-  - [ ] 4.9 Diagram appearance: when `isLoading` transitions to `false`, fade in the diagram with a CSS transition (`opacity 0 → 1`, `transition: opacity 500ms ease-in`)
-  - [ ] 4.10 For `variant='individual-interview'` only: render confirm/reject buttons below the diagram:
+- [x] Task 4: Create DiagramCanvas component `src/components/diagram/diagram-canvas.tsx` (AC: #6, #7)
+  - [x] 4.1 Create as a Client Component (`"use client"`) — Mermaid.js requires browser DOM
+  - [x] 4.2 Props: `mermaidDefinition: string`, `textAlternative: string`, `isLoading?: boolean`, `onConfirm?: () => void`, `onReject?: () => void`, `variant: 'individual-interview' | 'individual-carousel' | 'synthesis'`
+  - [x] 4.3 Use `src/hooks/use-mermaid.ts` hook (create in Task 5) to render the Mermaid definition into SVG
+  - [x] 4.4 Layout: `max-width: 700px` for individual variants, full panel width for synthesis variant. Background `--card`. Border radius 12px (`--radius-lg`). Shadow `--shadow-md`
+  - [x] 4.5 Pan/zoom controls: absolute-positioned top-right overlay with `+`, `-`, `Fit` buttons (36px each). Pan via click-drag on diagram. Zoom via scroll wheel or +/- buttons. Fit resets to show full diagram
+  - [x] 4.6 Implement pan/zoom with CSS `transform: translate(x, y) scale(s)` on the diagram container, tracking state with `useState`
+  - [x] 4.7 Text alternative: render `<details><summary>View text description</summary><p>{textAlternative}</p></details>` below the diagram canvas
+  - [x] 4.8 Loading state (`isLoading=true`): display "Let me put together what you described..." agent message with pulsing placeholder animation (pulse CSS animation on a card-sized placeholder, 2-5 sec duration)
+  - [x] 4.9 Diagram appearance: when `isLoading` transitions to `false`, fade in the diagram with a CSS transition (`opacity 0 → 1`, `transition: opacity 500ms ease-in`)
+  - [x] 4.10 For `variant='individual-interview'` only: render confirm/reject buttons below the diagram:
     - "Yes, that looks right" — green primary button (`--success` bg, white text, weight 600, 8px radius)
     - "Something's not right" — ghost button (no border, text only, `--foreground` color)
     - Buttons call `onConfirm` / `onReject` callbacks respectively
-  - [ ] 4.11 Keyboard accessibility: arrow keys for pan, `+`/`-` for zoom, Enter activates focused button. Focus indicators (2px solid primary, 2px offset) on all interactive elements via `:focus-visible`
-  - [ ] 4.12 Do NOT import Mermaid.js directly — use the `use-mermaid` hook which handles dynamic import
+  - [x] 4.11 Keyboard accessibility: arrow keys for pan, `+`/`-` for zoom, Enter activates focused button. Focus indicators (2px solid primary, 2px offset) on all interactive elements via `:focus-visible`
+  - [x] 4.12 Do NOT import Mermaid.js directly — use the `use-mermaid` hook which handles dynamic import
 
-- [ ] Task 5: Create Mermaid rendering hook `src/hooks/use-mermaid.ts` (AC: #6)
-  - [ ] 5.1 Implement `useMermaid(definition: string, containerId: string): { svg: string | null; isRendering: boolean; error: string | null }`
-  - [ ] 5.2 Dynamically import `mermaid` (v11.14.0) using `import('mermaid')` — no SSR, no static import
-  - [ ] 5.3 Initialize Mermaid with theme settings on first load (only once per session)
-  - [ ] 5.4 Call `mermaid.render(containerId, definition)` to produce SVG string
-  - [ ] 5.5 Handle errors gracefully — if Mermaid parsing fails, set `error` with a descriptive message. Do not throw
-  - [ ] 5.6 Re-render when `definition` changes (via `useEffect` dependency)
+- [x] Task 5: Create Mermaid rendering hook `src/hooks/use-mermaid.ts` (AC: #6)
+  - [x] 5.1 Implement `useMermaid(definition: string, containerId: string): { svg: string | null; isRendering: boolean; error: string | null }`
+  - [x] 5.2 Dynamically import `mermaid` (v11.14.0) using `import('mermaid')` — no SSR, no static import
+  - [x] 5.3 Initialize Mermaid with theme settings on first load (only once per session)
+  - [x] 5.4 Call `mermaid.render(containerId, definition)` to produce SVG string
+  - [x] 5.5 Handle errors gracefully — if Mermaid parsing fails, set `error` with a descriptive message. Do not throw
+  - [x] 5.6 Re-render when `definition` changes (via `useEffect` dependency)
 
-- [ ] Task 6: Create API routes for schema operations (AC: #6, #8, #9)
-  - [ ] 6.1 Create `src/app/api/interview/[token]/schema/route.ts` with GET and POST handlers
-  - [ ] 6.2 **GET handler** — `GET /api/interview/[token]/schema`:
+- [x] Task 6: Create API routes for schema operations (AC: #6, #8, #9)
+  - [x] 6.1 Create `src/app/api/interview/[token]/schema/route.ts` with GET and POST handlers
+  - [x] 6.2 **GET handler** — `GET /api/interview/[token]/schema`:
     - Validate token format via `validateTokenFormat()` from `@/lib/interview/token`
     - Look up token → interview via query functions from `@/lib/db/queries`
     - If interview status is not `completed`, `validating`, or `captured`, return 404 with `{ error: { message: "No schema available for this interview", code: "SCHEMA_NOT_AVAILABLE" } }`
@@ -116,7 +116,7 @@ So that I can confirm my knowledge was captured accurately.
       - Transition interview status to `validating` via state machine
       - Return the generated schema and diagram
     - Wrap in try/catch — on error return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
-  - [ ] 6.3 **POST handler** — `POST /api/interview/[token]/schema` (confirm validation):
+  - [x] 6.3 **POST handler** — `POST /api/interview/[token]/schema` (confirm validation):
     - Validate token format
     - Look up token → interview → individual schema
     - Interview must be in `validating` status — if not, return 400 with `{ error: { message: "Interview is not in validating state", code: "INVALID_STATE" } }`
@@ -124,34 +124,34 @@ So that I can confirm my knowledge was captured accurately.
     - Transition interview status from `validating` to `captured` via state machine (`transitionInterviewStatus()` from `@/lib/synthesis/state-machine.ts`)
     - Return `{ data: { interviewState: 'captured', validationStatus: 'validated' } }`
     - Wrap in try/catch — on error return 500 with `INTERNAL_ERROR`
-  - [ ] 6.4 Both handlers follow Next.js 16 async params pattern: `{ params }: { params: Promise<{ token: string }> }`
-  - [ ] 6.5 Route handlers import from `@/lib/db/queries`, `@/lib/interview/token`, `@/lib/interview/schema-extractor`, `@/lib/interview/individual-mermaid-generator`, `@/lib/synthesis/state-machine` — they do NOT import Drizzle directly
+  - [x] 6.4 Both handlers follow Next.js 16 async params pattern: `{ params }: { params: Promise<{ token: string }> }`
+  - [x] 6.5 Route handlers import from `@/lib/db/queries`, `@/lib/interview/token`, `@/lib/interview/schema-extractor`, `@/lib/interview/individual-mermaid-generator`, `@/lib/synthesis/state-machine` — they do NOT import Drizzle directly
 
-- [ ] Task 7: Add new query functions to `src/lib/db/queries.ts` (AC: #1, #8)
-  - [ ] 7.1 Implement `getVerifiedExchangesByInterviewId(interviewId: string): Promise<ExchangeRecord[]>` — queries `interviewExchanges` where `interviewId` matches AND `isVerified = true`, ordered by `sequenceNumber` ascending
-  - [ ] 7.2 Implement `getIndividualProcessSchemaByInterviewId(interviewId: string): Promise<SchemaRecord | null>` — queries `individualProcessSchemas` by `interviewId`, returns row or null
-  - [ ] 7.3 Implement `createIndividualProcessSchema(data: { interviewId, processNodeId, schemaJson, mermaidDefinition, validationStatus, extractionMethod }): Promise<SchemaRecord>` — inserts into `individualProcessSchemas` table, returns created record
-  - [ ] 7.4 Implement `updateIndividualProcessSchemaValidation(schemaId: string, validationStatus: string): Promise<SchemaRecord>` — updates `validationStatus` on existing row, returns updated record
-  - [ ] 7.5 All query functions use Drizzle — this is one of the only files allowed to import it
+- [x] Task 7: Add new query functions to `src/lib/db/queries.ts` (AC: #1, #8)
+  - [x] 7.1 Implement `getVerifiedExchangesByInterviewId(interviewId: string): Promise<ExchangeRecord[]>` — queries `interviewExchanges` where `interviewId` matches AND `isVerified = true`, ordered by `sequenceNumber` ascending
+  - [x] 7.2 Implement `getIndividualProcessSchemaByInterviewId(interviewId: string): Promise<SchemaRecord | null>` — queries `individualProcessSchemas` by `interviewId`, returns row or null
+  - [x] 7.3 Implement `createIndividualProcessSchema(data: { interviewId, processNodeId, schemaJson, mermaidDefinition, validationStatus, extractionMethod }): Promise<SchemaRecord>` — inserts into `individualProcessSchemas` table, returns created record
+  - [x] 7.4 Implement `updateIndividualProcessSchemaValidation(schemaId: string, validationStatus: string): Promise<SchemaRecord>` — updates `validationStatus` on existing row, returns updated record
+  - [x] 7.5 All query functions use Drizzle — this is one of the only files allowed to import it
 
-- [ ] Task 8: Create diagram review component `src/components/interview/diagram-review.tsx` (AC: #6, #7, #8, #9)
-  - [ ] 8.1 Create as a Client Component (`"use client"`)
-  - [ ] 8.2 Props: `token: string`, `interviewId: string`
-  - [ ] 8.3 On mount, call `GET /api/interview/[token]/schema` via `fetch()`
-  - [ ] 8.4 While loading: render DiagramCanvas with `isLoading={true}` — shows "Let me put together what you described..." with pulsing placeholder
-  - [ ] 8.5 When schema returns: render DiagramCanvas with `isLoading={false}`, `mermaidDefinition`, `textAlternative`, `variant='individual-interview'`
-  - [ ] 8.6 On "Yes, that looks right" click (`onConfirm`): call `POST /api/interview/[token]/schema` to confirm validation. On success, notify parent component that interview is now Captured (via callback prop or event)
-  - [ ] 8.7 On "Something's not right" click (`onReject`): this story does NOT implement the correction flow — Story 3.7 handles it. For now, set a local state flag `correctionRequested: true` that the parent can observe. Log a console warning: "Correction flow not yet implemented (Story 3.7)"
-  - [ ] 8.8 Handle error states: if the GET or POST fails, display an error message in the diagram area
-  - [ ] 8.9 No interview data in browser localStorage/sessionStorage (NFR9) — all state is in component state or on the server
+- [x] Task 8: Create diagram review component `src/components/interview/diagram-review.tsx` (AC: #6, #7, #8, #9)
+  - [x] 8.1 Create as a Client Component (`"use client"`)
+  - [x] 8.2 Props: `token: string`, `interviewId: string`
+  - [x] 8.3 On mount, call `GET /api/interview/[token]/schema` via `fetch()`
+  - [x] 8.4 While loading: render DiagramCanvas with `isLoading={true}` — shows "Let me put together what you described..." with pulsing placeholder
+  - [x] 8.5 When schema returns: render DiagramCanvas with `isLoading={false}`, `mermaidDefinition`, `textAlternative`, `variant='individual-interview'`
+  - [x] 8.6 On "Yes, that looks right" click (`onConfirm`): call `POST /api/interview/[token]/schema` to confirm validation. On success, notify parent component that interview is now Captured (via callback prop or event)
+  - [x] 8.7 On "Something's not right" click (`onReject`): this story does NOT implement the correction flow — Story 3.7 handles it. For now, set a local state flag `correctionRequested: true` that the parent can observe. Log a console warning: "Correction flow not yet implemented (Story 3.7)"
+  - [x] 8.8 Handle error states: if the GET or POST fails, display an error message in the diagram area
+  - [x] 8.9 No interview data in browser localStorage/sessionStorage (NFR9) — all state is in component state or on the server
 
-- [ ] Task 9: Create tests (AC: #1-#9)
-  - [ ] 9.1 Create `src/lib/schema/workflow.test.ts`:
+- [x] Task 9: Create tests (AC: #1-#9)
+  - [x] 9.1 Create `src/lib/schema/workflow.test.ts`:
     - Test valid `IndividualProcessSchema` passes Zod validation
     - Test invalid schemas fail validation (missing steps, invalid types, missing metadata)
     - Test schema with decision points validates correctly
     - Use REAL Zod validation (never mock Zod schemas)
-  - [ ] 9.2 Create `src/lib/interview/schema-extractor.test.ts`:
+  - [x] 9.2 Create `src/lib/interview/schema-extractor.test.ts`:
     - Test programmatic extraction produces valid schema from sample verified summaries
     - Test quality gate passes for well-formed extraction
     - Test quality gate fails on structural invalidity (bad Zod parse)
@@ -161,14 +161,14 @@ So that I can confirm my knowledge was captured accurately.
     - Test LLM fallback result passes Zod validation
     - Test logging captures method, quality gate results, duration, step count
     - Test `compromise` import is used (verify NLP functions are called)
-  - [ ] 9.3 Create `src/lib/interview/individual-mermaid-generator.test.ts`:
+  - [x] 9.3 Create `src/lib/interview/individual-mermaid-generator.test.ts`:
     - Test generates valid `flowchart TD` Mermaid syntax
     - Test steps render as rounded rectangles (parentheses syntax)
     - Test decision points render as diamonds (curly brace syntax)
     - Test labeled connections render with pipe syntax
     - Test text alternative includes all steps and decision points
     - Test node ID sanitization (hyphens → underscores, `s_` prefix)
-  - [ ] 9.4 Create `src/app/api/interview/[token]/schema/route.test.ts`:
+  - [x] 9.4 Create `src/app/api/interview/[token]/schema/route.test.ts`:
     - Test GET with completed interview triggers extraction and returns schema
     - Test GET with validating interview returns existing schema
     - Test GET with captured interview returns existing schema
@@ -180,7 +180,7 @@ So that I can confirm my knowledge was captured accurately.
     - Mock query functions from `@/lib/db/queries` — NOT Drizzle directly
     - Mock `extractProcessSchema` and `generateIndividualMermaid` from their respective modules
     - Mock `transitionInterviewStatus` from `@/lib/synthesis/state-machine`
-  - [ ] 9.5 Create `src/components/diagram/diagram-canvas.test.tsx`:
+  - [x] 9.5 Create `src/components/diagram/diagram-canvas.test.tsx`:
     - Test renders loading state with "Let me put together..." message
     - Test renders Mermaid diagram when not loading
     - Test confirm button calls `onConfirm` callback
@@ -189,7 +189,7 @@ So that I can confirm my knowledge was captured accurately.
     - Test pan/zoom controls render with correct buttons
     - Test buttons only render for `individual-interview` variant
     - Mock `use-mermaid` hook to return test SVG
-  - [ ] 9.6 Create `src/hooks/use-mermaid.test.ts`:
+  - [x] 9.6 Create `src/hooks/use-mermaid.test.ts`:
     - Test dynamically imports Mermaid.js
     - Test returns SVG string on successful render
     - Test returns error on invalid Mermaid syntax
@@ -428,9 +428,35 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+N/A — all tests pass on first full-suite run.
 
 ### Completion Notes List
+- Process Schema Zod types created with `zod/v4` — `IndividualStep`, `IndividualConnection`, `IndividualProcessSchema`
+- NLP extraction pipeline uses `compromise` v14.15.0 for verb-object extraction with conditional pattern detection
+- Quality gate checks structural (Zod), completeness (step/summary ratio), and richness (decision point presence)
+- LLM fallback transparently engages via `resolveProvider()` when quality gate fails
+- Mermaid generator outputs `flowchart TD` with rounded rectangles for steps and diamonds for decisions
+- DiagramCanvas component implements pan/zoom (CSS transform), keyboard navigation, and loading/fade-in states
+- useMermaid hook dynamically imports mermaid.js — no SSR
+- API route GET triggers extraction on completed interviews, POST confirms validation and transitions to captured
+- All service boundaries enforced: compromise only in schema-extractor, Drizzle only in queries, Mermaid only via dynamic import
+- 62 new tests across 6 test files, all passing
 
 ### File List
+- `src/lib/schema/workflow.ts` (created)
+- `src/lib/schema/workflow.test.ts` (created)
+- `src/lib/interview/schema-extractor.ts` (created)
+- `src/lib/interview/schema-extractor.test.ts` (created)
+- `src/lib/interview/individual-mermaid-generator.ts` (created)
+- `src/lib/interview/individual-mermaid-generator.test.ts` (created)
+- `src/hooks/use-mermaid.ts` (created)
+- `src/hooks/use-mermaid.test.ts` (created)
+- `src/components/diagram/diagram-canvas.tsx` (created)
+- `src/components/diagram/diagram-canvas.test.tsx` (created)
+- `src/app/api/interview/[token]/schema/route.ts` (created)
+- `src/app/api/interview/[token]/schema/route.test.ts` (created)
+- `src/components/interview/diagram-review.tsx` (created)
+- `src/lib/db/queries.ts` (modified — added 5 schema query functions)
