@@ -44,7 +44,7 @@ AI-powered workflow discovery tool. Workers describe how they do their jobs thro
 
 ### Architecture
 
-- Two-dimensional AI: Skills define *what* the LLM does; Providers define *which* LLM. Claude is the sole provider for MVP. All calls through `provider-registry.ts`.
+- Two-dimensional AI: Skills define _what_ the LLM does; Providers define _which_ LLM. Claude is the sole provider for MVP. All calls through `provider-registry.ts`.
 - Interview prompts assembled via `skill-loader.ts` → `prompt-assembler.ts` — never hardcoded
 - Server Components by default; `"use client"` only at leaf components
 - No global state libraries — Server Components + local state only

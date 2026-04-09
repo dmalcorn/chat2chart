@@ -8,37 +8,39 @@ AI-powered workflow discovery tool. Workers describe how they do their jobs thro
 
 **IRS Taxpayer Document Processing** (TREAS-IRS-64) — Three Document Processing Technicians at different IRS Service Centers describe how they handle incoming taxpayer correspondence. The synthesis reveals meaningful operational variation:
 
-| Interviewee | Location | Key Divergence |
-|---|---|---|
-| Rachel Torres | Austin, TX | Pre-sorts mail by form type before scanning |
+| Interviewee     | Location        | Key Divergence                                    |
+| --------------- | --------------- | ------------------------------------------------- |
+| Rachel Torres   | Austin, TX      | Pre-sorts mail by form type before scanning       |
 | Marcus Williams | Kansas City, MO | Scans first, classifies digitally via auto-detect |
-| Janet Park | Ogden, UT | Adds manual QC spot-check after data entry |
+| Janet Park      | Ogden, UT       | Adds manual QC spot-check after data entry        |
 
 Two interviews are pre-seeded. Janet Park's interview is conducted live during the demo.
 
 ## Two User Experiences
 
 ### The Interviewee (Voice Interview)
+
 Token-based link, no login. Consent screen, voice conversation with reflect-and-confirm pattern, personal process diagram validation. ~90 seconds, 5-8 exchanges.
 
 ### The Supervisor (Synthesis Viewing)
+
 Email/password sign-in. Mode 1: individual diagram carousel. Mode 2: split-screen comparison with clickable divergence annotations that auto-navigate to the relevant interviewee.
 
 ## Tech Stack
 
-| Component | Technology | Version |
-|---|---|---|
-| Framework | Next.js (App Router) | 16.2.2 |
-| Frontend | React, Tailwind CSS, shadcn/ui | 19.2.4, 4.2.2, v4 |
-| Database | PostgreSQL via Railway | 17.9 |
-| ORM | Drizzle | 0.45.2 |
-| LLM | Claude via @anthropic-ai/sdk | 0.85.0 |
-| NLP Extraction | compromise | 14.15.0 |
-| Validation | Zod | 4.3.6 |
-| Visualization | Mermaid | 11.14.0 |
-| STT | Browser Web Speech API | — |
-| Testing | Vitest, Testing Library, Playwright | 4.1.2, 16.3.2, 1.59.1 |
-| Deployment | Railway | — |
+| Component      | Technology                          | Version               |
+| -------------- | ----------------------------------- | --------------------- |
+| Framework      | Next.js (App Router)                | 16.2.2                |
+| Frontend       | React, Tailwind CSS, shadcn/ui      | 19.2.4, 4.2.2, v4     |
+| Database       | PostgreSQL via Railway              | 17.9                  |
+| ORM            | Drizzle                             | 0.45.2                |
+| LLM            | Claude via @anthropic-ai/sdk        | 0.85.0                |
+| NLP Extraction | compromise                          | 14.15.0               |
+| Validation     | Zod                                 | 4.3.6                 |
+| Visualization  | Mermaid                             | 11.14.0               |
+| STT            | Browser Web Speech API              | —                     |
+| Testing        | Vitest, Testing Library, Playwright | 4.1.2, 16.3.2, 1.59.1 |
+| Deployment     | Railway                             | —                     |
 
 ## Getting Started
 
@@ -73,6 +75,7 @@ npm run dev                  # Start dev server with Turbopack
 ### Seed Data
 
 The seed script populates:
+
 - Project and process tree (L1 org root + L2 leaf node)
 - PM and supervisor accounts
 - Two completed interviews (Rachel Torres, Marcus Williams) with validated schemas and diagrams
@@ -114,17 +117,17 @@ chat2chart/
 
 These import restrictions are enforced without exception:
 
-| Package | Allowed Only In |
-|---|---|
-| `@anthropic-ai/sdk` | `src/lib/ai/` |
-| Drizzle | `src/lib/db/` |
-| `bcrypt` | `src/lib/auth/config.ts` |
-| `compromise` | `src/lib/interview/schema-extractor.ts` |
-| Web Speech API | `src/lib/stt/` |
+| Package             | Allowed Only In                         |
+| ------------------- | --------------------------------------- |
+| `@anthropic-ai/sdk` | `src/lib/ai/`                           |
+| Drizzle             | `src/lib/db/`                           |
+| `bcrypt`            | `src/lib/auth/config.ts`                |
+| `compromise`        | `src/lib/interview/schema-extractor.ts` |
+| Web Speech API      | `src/lib/stt/`                          |
 
 ## Architecture
 
-- **Two-dimensional AI:** Skills define *what* the LLM does; Providers define *which* LLM. Single provider (Claude) and single skill (Federal Document Processing) for MVP.
+- **Two-dimensional AI:** Skills define _what_ the LLM does; Providers define _which_ LLM. Single provider (Claude) and single skill (Federal Document Processing) for MVP.
 - **Interview flow:** Skill-loader → prompt-assembler → provider-registry → Claude → SSE stream
 - **Extraction pipeline:** compromise.js NLP → quality gate → LLM fallback (transparent to interviewee)
 - **Synthesis engine:** Five-stage pipeline with checkpoints (Match → Classify → Narrate)
@@ -143,15 +146,15 @@ These import restrictions are enforced without exception:
 
 ## Planning Artifacts
 
-| Document | Path |
-|---|---|
-| MVP PRD | `_bmad-output/planning-artifacts/prd.md` |
-| Architecture | `_bmad-output/planning-artifacts/architecture.md` |
-| UX Design Spec | `_bmad-output/planning-artifacts/ux-design-specification.md` |
-| Epics & Stories | `_bmad-output/planning-artifacts/epics.md` |
-| Project Context | `_bmad-output/project-context.md` |
-| Coding Standards | `_bmad-output/coding-standards.md` |
-| Approved Tech Stack | `_bmad-output/approved-tech-stack.md` |
+| Document            | Path                                                         |
+| ------------------- | ------------------------------------------------------------ |
+| MVP PRD             | `_bmad-output/planning-artifacts/prd.md`                     |
+| Architecture        | `_bmad-output/planning-artifacts/architecture.md`            |
+| UX Design Spec      | `_bmad-output/planning-artifacts/ux-design-specification.md` |
+| Epics & Stories     | `_bmad-output/planning-artifacts/epics.md`                   |
+| Project Context     | `_bmad-output/project-context.md`                            |
+| Coding Standards    | `_bmad-output/coding-standards.md`                           |
+| Approved Tech Stack | `_bmad-output/approved-tech-stack.md`                        |
 
 ## License
 

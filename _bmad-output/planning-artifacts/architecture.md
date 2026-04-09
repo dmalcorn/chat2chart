@@ -57,7 +57,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 3. **Immediate exchange persistence** — Every interview exchange hits the DB on creation. This is load-bearing for audit trail and (in the full product) session resumability.
 4. **State machine transitions** — Interview states (Pending → Active → Completed → Captured) and synthesis states drive what the UI renders and what operations are allowed.
 5. **SSE streaming pattern** — Standardized event format (`message`, `done`, `error`) used by both the interview agent and potentially diagram correction agent.
-6. **Service boundary enforcement** — LLM SDKs, Drizzle, bcrypt, compromise, bpmn-moddle each confined to specific directories. This is a hard rule from the parent project.
+6. **Service boundary enforcement** — LLM SDKs, Drizzle, bcrypt, compromise each confined to specific directories. This is a hard rule from the parent project. _(Note: bpmn-moddle was listed here originally but is not MVP scope — BPMN export excluded from MVP PRD.)_
 
 ## Starter Template Evaluation
 
@@ -486,7 +486,7 @@ chat2chart/
 ├── README.md
 ├── package.json
 ├── next.config.ts
-├── tailwind.config.ts
+├── postcss.config.mjs                  # Tailwind v4 CSS-first (no tailwind.config.ts)
 ├── tsconfig.json
 ├── drizzle.config.ts
 ├── vitest.config.ts
