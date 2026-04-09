@@ -169,15 +169,13 @@ describe('Database Queries', () => {
   });
 
   describe('getInterviewTokenByToken', () => {
-    it('returns token with project and processNode relations', async () => {
+    it('returns token row with interviewee details', async () => {
       const result = await getInterviewTokenByToken('test-token-uuid-v4');
       expect(result).not.toBeNull();
       expect(result!.intervieweeName).toBe('Jane Doe');
       expect(result!.intervieweeRole).toBe('Mail Clerk — Austin Campus');
-      expect(result!.project).toBeDefined();
-      expect(result!.project.name).toBe('Test Project');
-      expect(result!.processNode).toBeDefined();
-      expect(result!.processNode.name).toBe('Review Budget Request');
+      expect(result!.projectId).toBeDefined();
+      expect(result!.processNodeId).toBeDefined();
     });
 
     it('returns null for non-existent token', async () => {

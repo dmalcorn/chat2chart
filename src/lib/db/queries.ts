@@ -17,6 +17,13 @@ export async function getProjectById(projectId: string) {
   return result ?? null;
 }
 
+export async function getProcessNodeById(nodeId: string) {
+  const result = await db.query.processNodes.findFirst({
+    where: eq(processNodes.id, nodeId),
+  });
+  return result ?? null;
+}
+
 export async function getProcessNodesByProjectId(projectId: string) {
   return db.query.processNodes.findMany({
     where: eq(processNodes.projectId, projectId),
@@ -27,10 +34,6 @@ export async function getProcessNodesByProjectId(projectId: string) {
 export async function getInterviewTokenByToken(token: string) {
   const result = await db.query.interviewTokens.findFirst({
     where: eq(interviewTokens.token, token),
-    with: {
-      project: true,
-      processNode: true,
-    },
   });
   return result ?? null;
 }

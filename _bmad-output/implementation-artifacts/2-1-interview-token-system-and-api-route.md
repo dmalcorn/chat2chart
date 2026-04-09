@@ -1,6 +1,6 @@
 # Story 2.1: Interview Token System & API Route
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -18,27 +18,27 @@ So that I can access my interview without creating an account.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create token validation utility `src/lib/interview/token.ts` (AC: #2)
-  - [ ] 1.1 Create a `validateTokenFormat(token: string): boolean` function that checks UUID v4 format using a regex pattern (`/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i`)
-  - [ ] 1.2 Export the validation function for use by the API route and tests
+- [x] Task 1: Create token validation utility `src/lib/interview/token.ts` (AC: #2)
+  - [x] 1.1 Create a `validateTokenFormat(token: string): boolean` function that checks UUID v4 format using a regex pattern (`/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i`)
+  - [x] 1.2 Export the validation function for use by the API route and tests
 
-- [ ] Task 2: Create database query functions in `src/lib/db/queries.ts` (AC: #1, #3)
-  - [ ] 2.1 Create the `queries.ts` file — this file does NOT exist yet
-  - [ ] 2.2 Import `db` from `@/lib/db/connection` and schema tables from `@/lib/db/schema`
-  - [ ] 2.3 Implement `getInterviewTokenByToken(token: string)` — queries `interviewTokens` table by `token` column, returns token row with project, process node, interviewee name/role, or null
-  - [ ] 2.4 Implement `getInterviewByTokenId(tokenId: string)` — queries `interviews` table by `tokenId`, returns interview row with status, or null
-  - [ ] 2.5 Implement `getProjectById(projectId: string)` — queries `projects` table by id, returns project row or null
-  - [ ] 2.6 Implement `getProcessNodeById(nodeId: string)` — queries `processNodes` table by id, returns node row or null
-  - [ ] 2.7 All query functions return typed results inferred from the Drizzle schema — do NOT define separate TypeScript types
+- [x] Task 2: Create database query functions in `src/lib/db/queries.ts` (AC: #1, #3)
+  - [x] 2.1 Create the `queries.ts` file — this file does NOT exist yet
+  - [x] 2.2 Import `db` from `@/lib/db/connection` and schema tables from `@/lib/db/schema`
+  - [x] 2.3 Implement `getInterviewTokenByToken(token: string)` — queries `interviewTokens` table by `token` column, returns token row with project, process node, interviewee name/role, or null
+  - [x] 2.4 Implement `getInterviewByTokenId(tokenId: string)` — queries `interviews` table by `tokenId`, returns interview row with status, or null
+  - [x] 2.5 Implement `getProjectById(projectId: string)` — queries `projects` table by id, returns project row or null
+  - [x] 2.6 Implement `getProcessNodeById(nodeId: string)` — queries `processNodes` table by id, returns node row or null
+  - [x] 2.7 All query functions return typed results inferred from the Drizzle schema — do NOT define separate TypeScript types
 
-- [ ] Task 3: Create `GET /api/interview/[token]` route handler (AC: #1, #3, #4, #5)
-  - [ ] 3.1 Create `src/app/api/interview/[token]/route.ts`
-  - [ ] 3.2 Extract `token` from route params: `{ params }: { params: Promise<{ token: string }> }` (Next.js 16 async params)
-  - [ ] 3.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404 error immediately
-  - [ ] 3.4 Look up token in DB via `getInterviewTokenByToken(token)` — if not found, return 404 with exact error message: `"This link isn't valid. Contact the person who sent it to you."` and code `"INVALID_TOKEN"`
-  - [ ] 3.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if no interview row exists, the status is implicitly `pending` (token exists but interview not yet created)
-  - [ ] 3.6 Look up project via `getProjectById(tokenRow.projectId)` and process node via `getProcessNodeById(tokenRow.processNodeId)`
-  - [ ] 3.7 Return success response wrapped per API standard:
+- [x] Task 3: Create `GET /api/interview/[token]` route handler (AC: #1, #3, #4, #5)
+  - [x] 3.1 Create `src/app/api/interview/[token]/route.ts`
+  - [x] 3.2 Extract `token` from route params: `{ params }: { params: Promise<{ token: string }> }` (Next.js 16 async params)
+  - [x] 3.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404 error immediately
+  - [x] 3.4 Look up token in DB via `getInterviewTokenByToken(token)` — if not found, return 404 with exact error message: `"This link isn't valid. Contact the person who sent it to you."` and code `"INVALID_TOKEN"`
+  - [x] 3.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if no interview row exists, the status is implicitly `pending` (token exists but interview not yet created)
+  - [x] 3.6 Look up project via `getProjectById(tokenRow.projectId)` and process node via `getProcessNodeById(tokenRow.processNodeId)`
+  - [x] 3.7 Return success response wrapped per API standard:
     ```typescript
     {
       data: {
@@ -58,13 +58,13 @@ So that I can access my interview without creating an account.
       }
     }
     ```
-  - [ ] 3.8 Wrap in try/catch — on unexpected errors, return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
+  - [x] 3.8 Wrap in try/catch — on unexpected errors, return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
 
-- [ ] Task 4: Create tests (AC: #1-#5)
-  - [ ] 4.1 Create `src/lib/interview/token.test.ts`:
+- [x] Task 4: Create tests (AC: #1-#5)
+  - [x] 4.1 Create `src/lib/interview/token.test.ts`:
     - Test valid UUID v4 tokens return true
     - Test invalid formats return false (not a UUID, UUID v1, empty string, SQL injection attempts)
-  - [ ] 4.2 Create `src/app/api/interview/[token]/route.test.ts`:
+  - [x] 4.2 Create `src/app/api/interview/[token]/route.test.ts`:
     - Test valid token returns 200 with project, process node, interviewee info, and interview state
     - Test valid token with no interview row returns `interviewState: 'pending'`
     - Test valid token with active interview returns `interviewState: 'active'`
@@ -171,12 +171,40 @@ Files **NOT modified** by this story:
 - [Source: _bmad-output/planning-artifacts/prd.md#NFR10b — UUID v4 token requirement]
 - [Source: _bmad-output/project-context.md#Service Boundaries — Drizzle only in src/lib/db/]
 
+### Review Findings
+
+- [x] [Review][Decision] Redundant DB queries — resolved: removed eager-load from `getInterviewTokenByToken`, kept spec-prescribed separate lookups via `getProjectById`/`getProcessNodeById`
+- [x] [Review][Patch] Non-null assertions `project!`/`processNode!` — replaced with null guard returning 500 INTERNAL_ERROR + added 2 tests for null project/processNode
+- [x] [Review][Patch] No error logging in catch block — added `console.error` before returning 500
+- [x] [Review][Patch] Missing test for `intervieweeRole: null` — added test confirming null is returned in response
+- [x] [Review][Patch] Missing tests for `completed`/`validating`/`captured` states — added 3 tests covering all remaining interview states
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
+
+None — clean implementation, no blockers.
 
 ### Completion Notes List
 
+- Task 1: Created `src/lib/interview/token.ts` with `validateTokenFormat()` using UUID v4 regex. 9 unit tests (valid, invalid, v1, empty, SQL injection, no-hyphens, wrong variant bits).
+- Task 2: `src/lib/db/queries.ts` already existed from Epic 1 with `getInterviewTokenByToken`, `getInterviewByTokenId`, `getProjectById`. Added missing `getProcessNodeById` function.
+- Task 3: Created `src/app/api/interview/[token]/route.ts` — GET handler with format validation, DB lookups (parallelized via Promise.all), pending state for missing interview rows, standard error responses.
+- Task 4: Created `src/app/api/interview/[token]/route.test.ts` — 6 tests covering all ACs. Mocks query functions per story spec, never Drizzle directly. Used `// @vitest-environment node` for route handler context.
+- Full suite: 168 tests, 15 files, all passing. Zero regressions. TypeScript clean (no errors in story files; pre-existing bootstrap.ts errors unrelated).
+
+### Change Log
+
+- 2026-04-09: Story 2.1 implemented — token validation, getProcessNodeById query, GET route handler, tests
+
 ### File List
+
+- `src/lib/interview/token.ts` (new) — UUID v4 validation utility
+- `src/lib/interview/token.test.ts` (new) — 9 unit tests for token validation
+- `src/lib/db/queries.ts` (modified) — Added `getProcessNodeById` function
+- `src/app/api/interview/[token]/route.ts` (new) — GET route handler
+- `src/app/api/interview/[token]/route.test.ts` (new) — 6 integration tests for route handler
