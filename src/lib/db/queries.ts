@@ -1,4 +1,4 @@
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq } from 'drizzle-orm';
 import { db } from './connection';
 import {
   interviews,
@@ -43,6 +43,17 @@ export async function getInterviewByTokenId(tokenId: string) {
     where: eq(interviews.tokenId, tokenId),
   });
   return result ?? null;
+}
+
+export async function createInterview(data: {
+  tokenId: string;
+  projectId: string;
+  processNodeId: string;
+  status: 'pending' | 'active' | 'completed' | 'validating' | 'captured';
+  startedAt: Date;
+}) {
+  const [interview] = await db.insert(interviews).values(data).returning();
+  return interview;
 }
 
 export async function getInterviewExchangesByInterviewId(interviewId: string) {
@@ -117,4 +128,51 @@ export async function getSynthesisResultByNodeId(nodeId: string) {
     orderBy: [desc(synthesisResults.synthesisVersion)],
   });
   return result ?? null;
+}
+
+export async function getInterviewById(interviewId: string) {
+  const result = await db.query.interviews.findFirst({
+    where: eq(interviews.id, interviewId),
+  });
+  return result ?? null;
+}
+
+export async function getExchangesBySegmentId(interviewId: string, segmentId: string) {
+  return db.query.interviewExchanges.findMany({
+    where: and(
+      eq(interviewExchanges.interviewId, interviewId),
+      eq(interviewExchanges.segmentId, segmentId),
+    ),
+    orderBy: [asc(interviewExchanges.sequenceNumber)],
+  });
+}
+
+export async function updateExchangeVerification(exchangeId: string, isVerified: boolean) {
+  const [updated] = await db
+    .update(interviewExchanges)
+    .set({ isVerified })
+    .where(eq(interviewExchanges.id, exchangeId))
+    .returning();
+  return updated ?? null;
+}
+
+export async function getExchangeCountByInterviewId(interviewId: string): Promise<number> {
+  const [result] = await db
+    .select({ value: count() })
+    .from(interviewExchanges)
+    .where(eq(interviewExchanges.interviewId, interviewId));
+  return result?.value ?? 0;
+}
+
+export async function updateInterviewStatusWithTimestamps(
+  interviewId: string,
+  status: 'pending' | 'active' | 'completed' | 'validating' | 'captured',
+  timestamps?: { startedAt?: Date; completedAt?: Date },
+) {
+  const [updated] = await db
+    .update(interviews)
+    .set({ status, ...timestamps })
+    .where(eq(interviews.id, interviewId))
+    .returning();
+  return updated ?? null;
 }
