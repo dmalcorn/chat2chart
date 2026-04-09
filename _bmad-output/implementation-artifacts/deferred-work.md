@@ -49,3 +49,13 @@
 - `nodeType` and `role` are free-form `text()` columns with no DB-level enum constraint — unlike `interviewStatus`/`exchangeType`/`speaker` which use `pgEnum`. Invalid values can be inserted via direct DB access.
 - `drizzle-kit` installed at `0.31.10` vs spec's `0.45.x` — `0.45.x` does not exist; `approved-tech-stack.md` not formally amended to reflect actual version.
 - `interviewExchanges` and `synthesisCheckpoints` tables missing `updatedAt` — by design (immutable/write-once), but AC5 says "every table" without exceptions.
+
+## Deferred from: code review of story 2-3 (2026-04-09)
+
+- Race condition on concurrent POST `/api/interview/[token]/start` — DB unique constraint on `interviews.tokenId` prevents duplicate rows, but the route's catch block returns a generic 500 `INTERNAL_ERROR` instead of a user-friendly 409. Fix: catch pg error code `23505` and return 409 `INTERVIEW_ALREADY_STARTED`. MVP single-user-per-token makes this extremely unlikely.
+- Pending interview row edge case — if a pending interview row exists for a token, the route falls through the guard and attempts a duplicate insert (blocked by unique constraint → 500). Normal flow never creates pending rows (tokens start with no interview row; this route always creates with status `active`). Theoretical scenario only.
+
+## Deferred from: code review of story 2-2 (2026-04-09)
+
+- No error handling on parallel DB queries in `page.tsx:34-38` — `Promise.all` has no try/catch; DB errors surface as Next.js 500. Pre-existing pattern, no error.tsx exists for the interview route segment.
+- ViewportCheck SSR hydration flash on small viewports — `useState(true)` causes brief content flash on phones before useEffect fires. Spec acknowledges this trade-off by design.
