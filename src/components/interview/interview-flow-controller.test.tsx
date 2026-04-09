@@ -1,5 +1,28 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+// Mock the hooks used by ConversationThread
+vi.mock('./use-interview-stream', () => ({
+  useInterviewStream: vi.fn(() => ({
+    messages: [],
+    isAgentTyping: false,
+    isProcessingSpeech: false,
+    sendMessage: vi.fn(),
+    confirmSummary: vi.fn(),
+    requestCorrection: vi.fn(),
+    dispatch: vi.fn(),
+  })),
+}));
+
+vi.mock('@/lib/stt/use-speech-recognition', () => ({
+  useSpeechRecognition: vi.fn(() => ({
+    status: 'idle',
+    startRecording: vi.fn(),
+    stopRecording: vi.fn().mockResolvedValue(''),
+    isSupported: true,
+  })),
+}));
+
 import { InterviewFlowController } from './interview-flow-controller';
 
 const mockGetUserMedia = vi.fn();
@@ -29,7 +52,7 @@ describe('InterviewFlowController', () => {
     expect(screen.getByRole('button', { name: 'Begin Interview' })).toBeInTheDocument();
   });
 
-  it('transitions to ActiveInterviewPlaceholder after successful start', async () => {
+  it('transitions to ConversationThread after successful start', async () => {
     mockGetUserMedia.mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] });
     mockFetch.mockResolvedValue({
       ok: true,
@@ -40,7 +63,7 @@ describe('InterviewFlowController', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Begin Interview' }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Active interview/)).toBeInTheDocument();
+      expect(screen.getByLabelText('Start recording')).toBeInTheDocument();
     });
     expect(screen.queryByText('Tell Us About Your Process')).not.toBeInTheDocument();
   });

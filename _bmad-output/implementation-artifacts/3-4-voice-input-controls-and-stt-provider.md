@@ -1,6 +1,6 @@
 # Story 3.4: Voice Input Controls & STT Provider
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -21,9 +21,9 @@ So that I can describe my work without friction.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `STTProvider` interface in `src/lib/stt/provider.ts` (AC: #7)
-  - [ ] 1.1 Create `src/lib/stt/provider.ts` (replace `.gitkeep`)
-  - [ ] 1.2 Define the `STTProvider` interface matching the contract from coding-standards.md:
+- [x] Task 1: Create `STTProvider` interface in `src/lib/stt/provider.ts` (AC: #7)
+  - [x] 1.1 Create `src/lib/stt/provider.ts` (replace `.gitkeep`)
+  - [x] 1.2 Define the `STTProvider` interface matching the contract from coding-standards.md:
     ```typescript
     export interface STTTranscriptResult {
       text: string;
@@ -38,23 +38,23 @@ So that I can describe my work without friction.
       onTranscript(callback: (result: STTTranscriptResult) => void): void;
     }
     ```
-  - [ ] 1.3 Export the interface and result type for use by the web speech provider and hooks
+  - [x] 1.3 Export the interface and result type for use by the web speech provider and hooks
 
-- [ ] Task 2: Create `WebSpeechProvider` implementation in `src/lib/stt/web-speech-provider.ts` (AC: #7)
-  - [ ] 2.1 Create `src/lib/stt/web-speech-provider.ts`
-  - [ ] 2.2 Implement `WebSpeechProvider` class that implements `STTProvider`:
+- [x] Task 2: Create `WebSpeechProvider` implementation in `src/lib/stt/web-speech-provider.ts` (AC: #7)
+  - [x] 2.1 Create `src/lib/stt/web-speech-provider.ts`
+  - [x] 2.2 Implement `WebSpeechProvider` class that implements `STTProvider`:
     - `initialize()` — Create `SpeechRecognition` instance (with `webkitSpeechRecognition` fallback for Chrome), set `continuous = true`, `interimResults = false`, `lang = 'en-US'`
     - `startListening()` — Call `recognition.start()`, track listening state internally
     - `stopListening()` — Return a `Promise<string>` that calls `recognition.stop()`, resolves with the accumulated final transcript text, and resets internal state
     - `onTranscript(callback)` — Register callback to be invoked on `recognition.onresult` events, mapping the `SpeechRecognitionEvent` to `STTTranscriptResult` format
-  - [ ] 2.3 Handle the `onerror` event on the SpeechRecognition instance — log the error, invoke the transcript callback with empty text and `isFinal: true` so the UI can handle the failure gracefully
-  - [ ] 2.4 Handle the `onend` event — if the provider is still in "listening" state (e.g., browser stopped recognition unexpectedly), resolve the pending `stopListening` promise with whatever transcript was accumulated
-  - [ ] 2.5 Add a `isSupported()` static method that returns `boolean` — checks `typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)` for feature detection
-  - [ ] 2.6 Web Speech API is ONLY touched inside this file — components and hooks never reference `SpeechRecognition` or `webkitSpeechRecognition` directly
+  - [x] 2.3 Handle the `onerror` event on the SpeechRecognition instance — log the error, invoke the transcript callback with empty text and `isFinal: true` so the UI can handle the failure gracefully
+  - [x] 2.4 Handle the `onend` event — if the provider is still in "listening" state (e.g., browser stopped recognition unexpectedly), resolve the pending `stopListening` promise with whatever transcript was accumulated
+  - [x] 2.5 Add a `isSupported()` static method that returns `boolean` — checks `typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)` for feature detection
+  - [x] 2.6 Web Speech API is ONLY touched inside this file — components and hooks never reference `SpeechRecognition` or `webkitSpeechRecognition` directly
 
-- [ ] Task 3: Create `useSpeechRecognition` hook in `src/lib/stt/use-speech-recognition.ts` (AC: #3, #4, #7, #8)
-  - [ ] 3.1 Create `src/lib/stt/use-speech-recognition.ts`
-  - [ ] 3.2 Implement a custom React hook that wraps the `STTProvider` interface:
+- [x] Task 3: Create `useSpeechRecognition` hook in `src/lib/stt/use-speech-recognition.ts` (AC: #3, #4, #7, #8)
+  - [x] 3.1 Create `src/lib/stt/use-speech-recognition.ts`
+  - [x] 3.2 Implement a custom React hook that wraps the `STTProvider` interface:
     ```typescript
     export type SpeechRecognitionStatus = 'idle' | 'recording' | 'processing';
 
@@ -65,15 +65,15 @@ So that I can describe my work without friction.
       isSupported: boolean;
     }
     ```
-  - [ ] 3.3 On mount, instantiate `WebSpeechProvider`, call `initialize()`, and set `isSupported` via the static `isSupported()` method
-  - [ ] 3.4 `startRecording()` — set status to `'recording'`, call `provider.startListening()`. Transcript text is NOT exposed to the UI — it is only returned on stop (NFR2)
-  - [ ] 3.5 `stopRecording()` — set status to `'processing'`, call `provider.stopListening()`, return the transcript string (promise), then set status to `'idle'`. The calling component sends this transcript to the server; it is never rendered in the UI during recording
-  - [ ] 3.6 Cleanup: on unmount, stop any active recognition session to prevent memory leaks
-  - [ ] 3.7 The hook does NOT store or expose the transcript as state — the raw text is never available for rendering (NFR2). It is only returned as the resolved value of `stopRecording()`
+  - [x] 3.3 On mount, instantiate `WebSpeechProvider`, call `initialize()`, and set `isSupported` via the static `isSupported()` method
+  - [x] 3.4 `startRecording()` — set status to `'recording'`, call `provider.startListening()`. Transcript text is NOT exposed to the UI — it is only returned on stop (NFR2)
+  - [x] 3.5 `stopRecording()` — set status to `'processing'`, call `provider.stopListening()`, return the transcript string (promise), then set status to `'idle'`. The calling component sends this transcript to the server; it is never rendered in the UI during recording
+  - [x] 3.6 Cleanup: on unmount, stop any active recognition session to prevent memory leaks
+  - [x] 3.7 The hook does NOT store or expose the transcript as state — the raw text is never available for rendering (NFR2). It is only returned as the resolved value of `stopRecording()`
 
-- [ ] Task 4: Create `MicBar` component in `src/components/interview/mic-bar.tsx` (AC: #1, #2, #3, #4, #6)
-  - [ ] 4.1 Create `src/components/interview/mic-bar.tsx` as a `"use client"` component
-  - [ ] 4.2 Define props interface:
+- [x] Task 4: Create `MicBar` component in `src/components/interview/mic-bar.tsx` (AC: #1, #2, #3, #4, #6)
+  - [x] 4.1 Create `src/components/interview/mic-bar.tsx` as a `"use client"` component
+  - [x] 4.2 Define props interface:
     ```typescript
     export type MicBarMode = 'idle' | 'recording' | 'processing' | 'text';
 
@@ -86,49 +86,49 @@ So that I can describe my work without friction.
       disabled?: boolean;
     }
     ```
-  - [ ] 4.3 Render fixed-bottom bar (border-top 1px `--border`, max-width 800px centered, padding 12px 16px) with three zones:
+  - [x] 4.3 Render fixed-bottom bar (border-top 1px `--border`, max-width 800px centered, padding 12px 16px) with three zones:
     - Left: Mic button (48px circle)
     - Center: Status text or text input field
     - Right: "Prefer to type?" ghost link (always visible in voice states) or submit button (in text mode)
-  - [ ] 4.4 **Idle state:** Mic button with red border (`--destructive`), destructive-soft background (light red tint), white mic icon. Status text: "Tap to start" in muted-foreground. Click mic button calls `onStartRecording`
-  - [ ] 4.5 **Recording state:** Mic button with green background (`--success`), white mic icon, CSS pulse-ring animation (green ring expanding outward, opacity fade, 1.5s infinite). Status text: "Recording..." in success color. "Done" button visible (foreground bg, white text, 8px radius). Click Done calls `onStopRecording`
-  - [ ] 4.6 **Processing state:** Mic button disabled (muted background). Status text: "Processing..." in muted-foreground. No clickable actions
-  - [ ] 4.7 **Text mode:** Mic button hidden. Text input field visible (full width minus submit button area). Submit button to send typed text via `onSendText`. "Back to voice" toggle replaces "Prefer to type?"
-  - [ ] 4.8 "Prefer to type?" toggle: Ghost button style (`--primary` text, no border), right-aligned. Calls `onToggleTextMode`. Always visible in Idle, Recording, and Processing states
-  - [ ] 4.9 Use design tokens from `globals.css` — `--destructive`, `--success`, `--foreground`, `--border`, `--muted-foreground`, `--primary`. No hardcoded color values
-  - [ ] 4.10 CSS animations defined in the component or a co-located CSS module:
+  - [x] 4.4 **Idle state:** Mic button with red border (`--destructive`), destructive-soft background (light red tint), white mic icon. Status text: "Tap to start" in muted-foreground. Click mic button calls `onStartRecording`
+  - [x] 4.5 **Recording state:** Mic button with green background (`--success`), white mic icon, CSS pulse-ring animation (green ring expanding outward, opacity fade, 1.5s infinite). Status text: "Recording..." in success color. "Done" button visible (foreground bg, white text, 8px radius). Click Done calls `onStopRecording`
+  - [x] 4.6 **Processing state:** Mic button disabled (muted background). Status text: "Processing..." in muted-foreground. No clickable actions
+  - [x] 4.7 **Text mode:** Mic button hidden. Text input field visible (full width minus submit button area). Submit button to send typed text via `onSendText`. "Back to voice" toggle replaces "Prefer to type?"
+  - [x] 4.8 "Prefer to type?" toggle: Ghost button style (`--primary` text, no border), right-aligned. Calls `onToggleTextMode`. Always visible in Idle, Recording, and Processing states
+  - [x] 4.9 Use design tokens from `globals.css` — `--destructive`, `--success`, `--foreground`, `--border`, `--muted-foreground`, `--primary`. No hardcoded color values
+  - [x] 4.10 CSS animations defined in the component or a co-located CSS module:
     - Pulse-ring: `@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.8); opacity: 0; } }` — applied to a pseudo-element or sibling div around the mic button during Recording state
 
-- [ ] Task 5: Create `ActiveListeningState` component in `src/components/interview/active-listening-state.tsx` (AC: #5)
-  - [ ] 5.1 Create `src/components/interview/active-listening-state.tsx` as a `"use client"` component
-  - [ ] 5.2 Render a right-aligned card in the conversation thread (max-width 75%, same alignment as SpeechCard per UX-DR4):
+- [x] Task 5: Create `ActiveListeningState` component in `src/components/interview/active-listening-state.tsx` (AC: #5)
+  - [x] 5.1 Create `src/components/interview/active-listening-state.tsx` as a `"use client"` component
+  - [x] 5.2 Render a right-aligned card in the conversation thread (max-width 75%, same alignment as SpeechCard per UX-DR4):
     - Background: `--success` at ~8% opacity (success-soft equivalent — use Tailwind `bg-[color-mix(in_srgb,var(--success)_8%,transparent)]` or a CSS variable)
     - Border: 1.5px solid `--success`
     - Border radius: 8px
     - Padding: 12px 16px
-  - [ ] 5.3 Content layout:
+  - [x] 5.3 Content layout:
     - Row 1: Pulsing green dot (6px circle, `--success` background, CSS animation: opacity 1 to 0.4, 1.5s infinite) + "I'm hearing you..." text in success color
     - Row 2: 8 waveform bars (3px wide, varying heights 8-28px, `--success` color, staggered CSS animation at 0.8s duration with different delays per bar)
     - Row 3: "Words appear after Done" helper text in muted-foreground, small font
-  - [ ] 5.4 CSS animations:
+  - [x] 5.4 CSS animations:
     - Pulsing dot: `@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }` — 1.5s infinite
     - Waveform bars: `@keyframes waveform { 0%, 100% { height: 8px; } 50% { height: 28px; } }` — 0.8s infinite, each bar with staggered `animation-delay` (0s, 0.1s, 0.2s, etc.)
-  - [ ] 5.5 Component only renders when the parent passes `isRecording={true}` — it appears in the conversation thread during recording and is removed when recording stops (replaced by SpeechCard in Story 3.5)
+  - [x] 5.5 Component only renders when the parent passes `isRecording={true}` — it appears in the conversation thread during recording and is removed when recording stops (replaced by SpeechCard in Story 3.5)
 
-- [ ] Task 6: Accessibility implementation (AC: #1, #2, #6)
-  - [ ] 6.1 MicBar mic button: `aria-label="Start recording"` (Idle), `aria-label="Recording in progress"` (Recording), `aria-label="Processing speech"` (Processing). Update dynamically based on state
-  - [ ] 6.2 MicBar status text region: `aria-live="polite"` so screen readers announce state changes ("Tap to start", "Recording...", "Processing...")
-  - [ ] 6.3 MicBar keyboard support: Space bar toggles mic (start/stop). Enter activates Done button. Tab order: mic button → Done button (when visible) → "Prefer to type?" toggle
-  - [ ] 6.4 ActiveListeningState: `role="status"` with `aria-label="Recording audio — waveform animation"`. Waveform animation uses `aria-hidden="true"` since it is purely decorative
-  - [ ] 6.5 "Prefer to type?" toggle: keyboard-accessible (focusable, Enter/Space activates), `aria-label="Switch to text input mode"`
-  - [ ] 6.6 Text mode input: `aria-label="Type your response"`, auto-focus when text mode is activated
-  - [ ] 6.7 Focus indicators: all interactive elements show visible focus ring using `--ring` token (2px offset, matches shadcn/ui pattern)
+- [x] Task 6: Accessibility implementation (AC: #1, #2, #6)
+  - [x] 6.1 MicBar mic button: `aria-label="Start recording"` (Idle), `aria-label="Recording in progress"` (Recording), `aria-label="Processing speech"` (Processing). Update dynamically based on state
+  - [x] 6.2 MicBar status text region: `aria-live="polite"` so screen readers announce state changes ("Tap to start", "Recording...", "Processing...")
+  - [x] 6.3 MicBar keyboard support: Space bar toggles mic (start/stop). Enter activates Done button. Tab order: mic button → Done button (when visible) → "Prefer to type?" toggle
+  - [x] 6.4 ActiveListeningState: `role="status"` with `aria-label="Recording audio — waveform animation"`. Waveform animation uses `aria-hidden="true"` since it is purely decorative
+  - [x] 6.5 "Prefer to type?" toggle: keyboard-accessible (focusable, Enter/Space activates), `aria-label="Switch to text input mode"`
+  - [x] 6.6 Text mode input: `aria-label="Type your response"`, auto-focus when text mode is activated
+  - [x] 6.7 Focus indicators: all interactive elements show visible focus ring using `--ring` token (2px offset, matches shadcn/ui pattern)
 
-- [ ] Task 7: Create tests (AC: #1-#8)
-  - [ ] 7.1 Create `src/lib/stt/provider.test.ts`:
+- [x] Task 7: Create tests (AC: #1-#8)
+  - [x] 7.1 Create `src/lib/stt/provider.test.ts`:
     - Test that the `STTProvider` interface shape is correctly typed (compile-time check via type assertion)
     - Test that `STTTranscriptResult` has required fields
-  - [ ] 7.2 Create `src/lib/stt/web-speech-provider.test.ts`:
+  - [x] 7.2 Create `src/lib/stt/web-speech-provider.test.ts`:
     - Mock `window.SpeechRecognition` (or `webkitSpeechRecognition`) to test the provider without a real browser
     - Test `initialize()` creates a recognition instance
     - Test `startListening()` calls `recognition.start()`
@@ -137,14 +137,14 @@ So that I can describe my work without friction.
     - Test `isSupported()` returns true when `SpeechRecognition` exists on window, false otherwise
     - Test error handling: `onerror` event triggers callback with empty text
     - Mock at the Web Speech API level here (this is the adapter boundary — the ONLY place we mock browser APIs per testing rules)
-  - [ ] 7.3 Create `src/lib/stt/use-speech-recognition.test.ts`:
+  - [x] 7.3 Create `src/lib/stt/use-speech-recognition.test.ts`:
     - Mock `STTProvider` interface (NOT `WebSpeechProvider` directly, NOT `SpeechRecognition` browser API)
     - Test initial state is `{ status: 'idle', isSupported: true/false }`
     - Test `startRecording()` transitions status to `'recording'`
     - Test `stopRecording()` transitions through `'processing'` to `'idle'`, returns transcript string
     - Test that transcript text is NOT exposed as state (NFR2) — verify no state variable holds the transcript
     - Test cleanup on unmount stops recognition
-  - [ ] 7.4 Create `src/components/interview/mic-bar.test.tsx`:
+  - [x] 7.4 Create `src/components/interview/mic-bar.test.tsx`:
     - Test Idle state renders: red-bordered mic button, "Tap to start" text, "Prefer to type?" toggle
     - Test Recording state renders: green mic button, "Recording..." text, Done button, "Prefer to type?" toggle
     - Test Processing state renders: disabled mic button, "Processing..." text, no Done button
@@ -155,7 +155,7 @@ So that I can describe my work without friction.
     - Test typing text and clicking submit calls `onSendText` with the typed text
     - Test accessibility: `aria-label` values change per state, `aria-live` region exists
     - Test keyboard: Space on mic button triggers start/stop
-  - [ ] 7.5 Create `src/components/interview/active-listening-state.test.tsx`:
+  - [x] 7.5 Create `src/components/interview/active-listening-state.test.tsx`:
     - Test component renders green dot, "I'm hearing you..." text, waveform bars, helper text
     - Test 8 waveform bars are rendered
     - Test `role="status"` and `aria-label` are present
@@ -366,9 +366,31 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+None
 
 ### Completion Notes List
+- STTProvider interface matches coding-standards.md contract exactly
+- WebSpeechProvider handles SpeechRecognition + webkitSpeechRecognition fallback
+- Fixed onend handler to always resolve pending stopListening promise (not just when isListening)
+- useSpeechRecognition hook does NOT expose transcript as state (NFR2 compliance)
+- MicBar has full 4-state rendering with accessibility (aria-labels, aria-live, keyboard support)
+- ActiveListeningState uses CSS color-mix for success-soft background
+- Added --success-soft and --destructive-soft design tokens to globals.css (light + dark mode)
+- Added Tailwind theme mappings for new tokens (--color-success-soft, --color-destructive-soft)
+- All 43 tests pass (provider types, web-speech-provider, use-speech-recognition, mic-bar, active-listening-state)
 
 ### File List
+- src/lib/stt/provider.ts (created)
+- src/lib/stt/web-speech-provider.ts (created)
+- src/lib/stt/use-speech-recognition.ts (created)
+- src/components/interview/mic-bar.tsx (created)
+- src/components/interview/active-listening-state.tsx (created)
+- src/lib/stt/provider.test.ts (created)
+- src/lib/stt/web-speech-provider.test.ts (created)
+- src/lib/stt/use-speech-recognition.test.ts (created)
+- src/components/interview/mic-bar.test.tsx (created)
+- src/components/interview/active-listening-state.test.tsx (created)
+- src/app/globals.css (modified — added success-soft, destructive-soft tokens)

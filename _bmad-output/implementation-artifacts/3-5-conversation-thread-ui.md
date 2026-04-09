@@ -1,6 +1,6 @@
 # Story 3.5: Conversation Thread UI
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -24,9 +24,9 @@ So that I can focus on describing my work.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create ConversationThread container component `src/components/interview/conversation-thread.tsx` (AC: #1, #6, #7)
-  - [ ] 1.1 Create a `"use client"` component that renders a scrollable container (max-width 800px, centered via `mx-auto`) with a message list area and a slot for MicBar fixed at the bottom
-  - [ ] 1.2 Define the local state model using `useReducer` with the following state shape:
+- [x] Task 1: Create ConversationThread container component `src/components/interview/conversation-thread.tsx` (AC: #1, #6, #7)
+  - [x] 1.1 Create a `"use client"` component that renders a scrollable container (max-width 800px, centered via `mx-auto`) with a message list area and a slot for MicBar fixed at the bottom
+  - [x] 1.2 Define the local state model using `useReducer` with the following state shape:
     ```typescript
     type MessageType = 'agent_question' | 'speech_card' | 'reflective_summary' | 'typing_indicator' | 'processing_indicator';
     type SummaryState = 'streaming' | 'awaiting_confirmation' | 'confirmed' | 'correction_requested';
@@ -47,82 +47,82 @@ So that I can focus on describing my work.
       isProcessingSpeech: boolean;
     }
     ```
-  - [ ] 1.3 Implement reducer actions: `ADD_MESSAGE`, `UPDATE_MESSAGE`, `SET_SUMMARY_STATE`, `SET_TYPING`, `SET_PROCESSING`, `SET_AUTO_SCROLL`, `APPEND_STREAMING_CONTENT`
-  - [ ] 1.4 Render messages in order with 16px gap (`gap-4`) between messages within the same segment
-  - [ ] 1.5 Render a `CycleSeparator` component (a styled Separator from shadcn/ui) between reflect-and-confirm cycles with 32px gap (`gap-8`, or `my-8` on the separator) — trigger separator when `segmentId` changes between consecutive messages
-  - [ ] 1.6 Use `overflow-y-auto` on the scroll container. Reserve space at the bottom for the fixed MicBar (e.g., `pb-[120px]`)
+  - [x] 1.3 Implement reducer actions: `ADD_MESSAGE`, `UPDATE_MESSAGE`, `SET_SUMMARY_STATE`, `SET_TYPING`, `SET_PROCESSING`, `SET_AUTO_SCROLL`, `APPEND_STREAMING_CONTENT`
+  - [x] 1.4 Render messages in order with 16px gap (`gap-4`) between messages within the same segment
+  - [x] 1.5 Render a `CycleSeparator` component (a styled Separator from shadcn/ui) between reflect-and-confirm cycles with 32px gap (`gap-8`, or `my-8` on the separator) — trigger separator when `segmentId` changes between consecutive messages
+  - [x] 1.6 Use `overflow-y-auto` on the scroll container. Reserve space at the bottom for the fixed MicBar (e.g., `pb-[120px]`)
 
-- [ ] Task 2: Implement auto-scroll with pause-on-user-scroll pattern (AC: #7)
-  - [ ] 2.1 Create a `useAutoScroll` custom hook that accepts a ref to the scroll container and the messages array
-  - [ ] 2.2 On new message or content update, scroll to bottom using `scrollIntoView({ behavior: 'smooth' })` on a sentinel div at the end of the message list — but only if `isAutoScrollEnabled` is true
-  - [ ] 2.3 Detect user scroll-up: attach a `scroll` event listener on the container. If `scrollTop + clientHeight < scrollHeight - threshold` (threshold ~50px), set `isAutoScrollEnabled` to false
-  - [ ] 2.4 Re-enable auto-scroll when the user scrolls back to the bottom (within threshold)
-  - [ ] 2.5 Always auto-scroll on the very first message (initial state is auto-scroll enabled)
+- [x] Task 2: Implement auto-scroll with pause-on-user-scroll pattern (AC: #7)
+  - [x] 2.1 Create a `useAutoScroll` custom hook that accepts a ref to the scroll container and the messages array
+  - [x] 2.2 On new message or content update, scroll to bottom using `scrollIntoView({ behavior: 'smooth' })` on a sentinel div at the end of the message list — but only if `isAutoScrollEnabled` is true
+  - [x] 2.3 Detect user scroll-up: attach a `scroll` event listener on the container. If `scrollTop + clientHeight < scrollHeight - threshold` (threshold ~50px), set `isAutoScrollEnabled` to false
+  - [x] 2.4 Re-enable auto-scroll when the user scrolls back to the bottom (within threshold)
+  - [x] 2.5 Always auto-scroll on the very first message (initial state is auto-scroll enabled)
 
-- [ ] Task 3: Create SSE connection hook `src/components/interview/use-interview-stream.ts` (AC: #1, #8)
-  - [ ] 3.1 Create a `useInterviewStream` custom hook that accepts the interview token and returns `{ sendMessage, messages, isAgentTyping, isProcessingSpeech }`
-  - [ ] 3.2 When `sendMessage(content: string)` is called: dispatch `SET_PROCESSING(true)` to show the "Processing your response..." indicator, then POST to `/api/interview/[token]/messages` with `{ content }` and open an EventSource on the response stream
-  - [ ] 3.3 Handle SSE `message` events: parse `{ content, exchangeType }`. On first token, dispatch `SET_TYPING(false)` and `ADD_MESSAGE` with type based on `exchangeType` (`question` maps to `agent_question`, `reflective_summary` maps to `reflective_summary`). On subsequent tokens, dispatch `APPEND_STREAMING_CONTENT`
-  - [ ] 3.4 Handle SSE `done` events: parse `{ interviewExchangeId, segmentId }`. If the completed message is a `reflective_summary`, set its `summaryState` to `awaiting_confirmation`. Mark streaming complete.
-  - [ ] 3.5 Handle SSE `error` events: parse `{ message, code }`. Display an inline system error message in the conversation thread ("The assistant is temporarily unavailable. Trying again...")
-  - [ ] 3.6 Before the first agent token arrives for a response, dispatch `SET_TYPING(true)` to show the typing indicator
-  - [ ] 3.7 Use native `EventSource` or a `fetch`-based SSE reader (since POST-based SSE is not supported by native EventSource, use a `fetch` + `ReadableStream` reader pattern to parse SSE events from the POST response)
+- [x] Task 3: Create SSE connection hook `src/components/interview/use-interview-stream.ts` (AC: #1, #8)
+  - [x] 3.1 Create a `useInterviewStream` custom hook that accepts the interview token and returns `{ sendMessage, messages, isAgentTyping, isProcessingSpeech }`
+  - [x] 3.2 When `sendMessage(content: string)` is called: dispatch `SET_PROCESSING(true)` to show the "Processing your response..." indicator, then POST to `/api/interview/[token]/messages` with `{ content }` and open an EventSource on the response stream
+  - [x] 3.3 Handle SSE `message` events: parse `{ content, exchangeType }`. On first token, dispatch `SET_TYPING(false)` and `ADD_MESSAGE` with type based on `exchangeType` (`question` maps to `agent_question`, `reflective_summary` maps to `reflective_summary`). On subsequent tokens, dispatch `APPEND_STREAMING_CONTENT`
+  - [x] 3.4 Handle SSE `done` events: parse `{ interviewExchangeId, segmentId }`. If the completed message is a `reflective_summary`, set its `summaryState` to `awaiting_confirmation`. Mark streaming complete.
+  - [x] 3.5 Handle SSE `error` events: parse `{ message, code }`. Display an inline system error message in the conversation thread ("The assistant is temporarily unavailable. Trying again...")
+  - [x] 3.6 Before the first agent token arrives for a response, dispatch `SET_TYPING(true)` to show the typing indicator
+  - [x] 3.7 Use native `EventSource` or a `fetch`-based SSE reader (since POST-based SSE is not supported by native EventSource, use a `fetch` + `ReadableStream` reader pattern to parse SSE events from the POST response)
 
-- [ ] Task 4: Create AgentMessageCard component `src/components/interview/agent-message-card.tsx` (AC: #2)
-  - [ ] 4.1 Create a `"use client"` leaf component that renders a left-aligned message card (max-width 75%) with `--primary-soft` background (`bg-primary-soft`), `--border` border (1px), 8px border radius, 12px 16px padding
-  - [ ] 4.2 Include a small Avatar icon on the left side of the card (a simple bot/agent icon, inline SVG, no external icon library)
-  - [ ] 4.3 Body text at 18px (`text-lg`) weight 400, line-height 1.6, using `--foreground` color
-  - [ ] 4.4 Support streaming content: accept a `content` prop and an `isStreaming` boolean. When streaming, render a blinking cursor at the end of the text
+- [x] Task 4: Create AgentMessageCard component `src/components/interview/agent-message-card.tsx` (AC: #2)
+  - [x] 4.1 Create a `"use client"` leaf component that renders a left-aligned message card (max-width 75%) with `--primary-soft` background (`bg-primary-soft`), `--border` border (1px), 8px border radius, 12px 16px padding
+  - [x] 4.2 Include a small Avatar icon on the left side of the card (a simple bot/agent icon, inline SVG, no external icon library)
+  - [x] 4.3 Body text at 18px (`text-lg`) weight 400, line-height 1.6, using `--foreground` color
+  - [x] 4.4 Support streaming content: accept a `content` prop and an `isStreaming` boolean. When streaming, render a blinking cursor at the end of the text
 
-- [ ] Task 5: Create SpeechCard component `src/components/interview/speech-card.tsx` (AC: #3, #10)
-  - [ ] 5.1 Create a `"use client"` leaf component that renders a right-aligned card (max-width 75%) with white background (`bg-card`), `--border` border (1px), 8px radius, 12px 16px padding
-  - [ ] 5.2 Implement two states: Processing (shows "Processing your response..." in muted-foreground text with a subtle pulse animation) and Completed (shows the full speech text at 15px, `--foreground` color)
-  - [ ] 5.3 Display a timestamp in 12px `--muted-foreground` above the card, right-aligned
-  - [ ] 5.4 Add `aria-live="polite"` on the card container so screen readers announce when the completed text appears
-  - [ ] 5.5 Never show during recording — only render after "Done" is clicked (controlled by parent ConversationThread state)
+- [x] Task 5: Create SpeechCard component `src/components/interview/speech-card.tsx` (AC: #3, #10)
+  - [x] 5.1 Create a `"use client"` leaf component that renders a right-aligned card (max-width 75%) with white background (`bg-card`), `--border` border (1px), 8px radius, 12px 16px padding
+  - [x] 5.2 Implement two states: Processing (shows "Processing your response..." in muted-foreground text with a subtle pulse animation) and Completed (shows the full speech text at 15px, `--foreground` color)
+  - [x] 5.3 Display a timestamp in 12px `--muted-foreground` above the card, right-aligned
+  - [x] 5.4 Add `aria-live="polite"` on the card container so screen readers announce when the completed text appears
+  - [x] 5.5 Never show during recording — only render after "Done" is clicked (controlled by parent ConversationThread state)
 
-- [ ] Task 6: Create ReflectiveSummaryCard component `src/components/interview/reflective-summary-card.tsx` (AC: #4, #5, #10, #11)
-  - [ ] 6.1 Create a `"use client"` leaf component with the following styling: background `var(--summary-bg)` (#F5F3FF), border 1.5px solid `var(--summary-border)` (#C4B5FD), 8px radius, 18px 20px padding, left-aligned, max-width 80%
-  - [ ] 6.2 Render the "REFLECTIVE SUMMARY" label: 12px, uppercase, letter-spacing 0.04em, color `var(--summary-text)` (#7C3AED), font-weight 600
-  - [ ] 6.3 Render body text at 18px (`text-lg`), font-weight 500, line-height 1.6, `--foreground` color
-  - [ ] 6.4 Implement the four states as a `summaryState` prop:
+- [x] Task 6: Create ReflectiveSummaryCard component `src/components/interview/reflective-summary-card.tsx` (AC: #4, #5, #10, #11)
+  - [x] 6.1 Create a `"use client"` leaf component with the following styling: background `var(--summary-bg)` (#F5F3FF), border 1.5px solid `var(--summary-border)` (#C4B5FD), 8px radius, 18px 20px padding, left-aligned, max-width 80%
+  - [x] 6.2 Render the "REFLECTIVE SUMMARY" label: 12px, uppercase, letter-spacing 0.04em, color `var(--summary-text)` (#7C3AED), font-weight 600
+  - [x] 6.3 Render body text at 18px (`text-lg`), font-weight 500, line-height 1.6, `--foreground` color
+  - [x] 6.4 Implement the four states as a `summaryState` prop:
     - **Streaming:** Text streams in token-by-token (content prop updates incrementally). Label visible. No buttons. Blinking cursor at end.
     - **Awaiting confirmation:** Full text visible. Render "Confirm" button (green/success variant, `bg-success text-white`) and "That's not right" button (ghost variant). "Confirm" is the primary action for this section.
     - **Confirmed:** Buttons disappear. Render a green checkmark badge: inline-flex, `bg-success-soft` background, green checkmark SVG icon, "Confirmed" text at 12px weight 500. Add `aria-live="polite"` so "Confirmed" is announced.
     - **Correction requested:** Card dims slightly (`opacity-75`). Buttons disappear. A new revised summary card will appear below (handled by parent).
-  - [ ] 6.5 Add `role="article"` and state-dependent `aria-label`: "Reflective summary streaming", "Reflective summary awaiting your confirmation", "Reflective summary confirmed", "Reflective summary correction requested"
-  - [ ] 6.6 Wire "Confirm" click to call `onConfirm(segmentId)` callback prop — this sends a confirmation exchange via the message API
-  - [ ] 6.7 Wire "That's not right" click to call `onCorrect(segmentId)` callback prop — this triggers the correction flow
+  - [x] 6.5 Add `role="article"` and state-dependent `aria-label`: "Reflective summary streaming", "Reflective summary awaiting your confirmation", "Reflective summary confirmed", "Reflective summary correction requested"
+  - [x] 6.6 Wire "Confirm" click to call `onConfirm(segmentId)` callback prop — this sends a confirmation exchange via the message API
+  - [x] 6.7 Wire "That's not right" click to call `onCorrect(segmentId)` callback prop — this triggers the correction flow
 
-- [ ] Task 7: Create TypingIndicator component `src/components/interview/typing-indicator.tsx` (AC: #8)
-  - [ ] 7.1 Create a small `"use client"` leaf component that renders three animated dots, left-aligned, matching agent message positioning (left side, with avatar placeholder for alignment)
-  - [ ] 7.2 Three dots (6px circles, `--muted-foreground` color) with staggered bounce animation (CSS keyframes, offset 0.15s each, 1.2s infinite loop)
-  - [ ] 7.3 Wrap in a container with `--primary-soft` background, same border radius as agent messages, compact padding (8px 16px)
-  - [ ] 7.4 Add `aria-live="polite"` with `aria-label="Agent is typing"` and visually hidden text "Agent is typing..."
+- [x] Task 7: Create TypingIndicator component `src/components/interview/typing-indicator.tsx` (AC: #8)
+  - [x] 7.1 Create a small `"use client"` leaf component that renders three animated dots, left-aligned, matching agent message positioning (left side, with avatar placeholder for alignment)
+  - [x] 7.2 Three dots (6px circles, `--muted-foreground` color) with staggered bounce animation (CSS keyframes, offset 0.15s each, 1.2s infinite loop)
+  - [x] 7.3 Wrap in a container with `--primary-soft` background, same border radius as agent messages, compact padding (8px 16px)
+  - [x] 7.4 Add `aria-live="polite"` with `aria-label="Agent is typing"` and visually hidden text "Agent is typing..."
 
-- [ ] Task 8: Create CycleSeparator component `src/components/interview/cycle-separator.tsx` (AC: #6)
-  - [ ] 8.1 Create a simple component that renders a shadcn/ui `Separator` with 32px vertical margin (16px top + 16px bottom, totaling 32px gap)
-  - [ ] 8.2 Style: `--border` color, full-width within the conversation container, 1px height
-  - [ ] 8.3 Add `role="separator"` and `aria-hidden="true"` (decorative separator)
+- [x] Task 8: Create CycleSeparator component `src/components/interview/cycle-separator.tsx` (AC: #6)
+  - [x] 8.1 Create a simple component that renders a shadcn/ui `Separator` with 32px vertical margin (16px top + 16px bottom, totaling 32px gap)
+  - [x] 8.2 Style: `--border` color, full-width within the conversation container, 1px height
+  - [x] 8.3 Add `role="separator"` and `aria-hidden="true"` (decorative separator)
 
-- [ ] Task 9: Wire confirm/correct actions to the message API (AC: #5, #11)
-  - [ ] 9.1 In `useInterviewStream`, implement `confirmSummary(segmentId: string)`: POST to `/api/interview/[token]/messages` with `{ content: "confirmed", exchangeType: "confirmation" }` — on success, dispatch `SET_SUMMARY_STATE(segmentId, 'confirmed')`
-  - [ ] 9.2 In `useInterviewStream`, implement `requestCorrection(segmentId: string)`: POST to `/api/interview/[token]/messages` with `{ content: "correction_requested", exchangeType: "confirmation" }` — on success, dispatch `SET_SUMMARY_STATE(segmentId, 'correction_requested')` and show a new typing indicator for the revised summary
-  - [ ] 9.3 Pass `confirmSummary` and `requestCorrection` as callbacks through ConversationThread to ReflectiveSummaryCard's `onConfirm` and `onCorrect` props
+- [x] Task 9: Wire confirm/correct actions to the message API (AC: #5, #11)
+  - [x] 9.1 In `useInterviewStream`, implement `confirmSummary(segmentId: string)`: POST to `/api/interview/[token]/messages` with `{ content: "confirmed", exchangeType: "confirmation" }` — on success, dispatch `SET_SUMMARY_STATE(segmentId, 'confirmed')`
+  - [x] 9.2 In `useInterviewStream`, implement `requestCorrection(segmentId: string)`: POST to `/api/interview/[token]/messages` with `{ content: "correction_requested", exchangeType: "confirmation" }` — on success, dispatch `SET_SUMMARY_STATE(segmentId, 'correction_requested')` and show a new typing indicator for the revised summary
+  - [x] 9.3 Pass `confirmSummary` and `requestCorrection` as callbacks through ConversationThread to ReflectiveSummaryCard's `onConfirm` and `onCorrect` props
 
-- [ ] Task 10: Implement focus-visible indicators (AC: #9)
-  - [ ] 10.1 Verify that the existing `globals.css` focus-visible styles from shadcn/ui apply to all interactive elements in the thread (buttons already have `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` in button.tsx)
-  - [ ] 10.2 For any custom interactive elements (summary card buttons, mic bar controls), ensure `:focus-visible` applies `outline: 2px solid var(--primary); outline-offset: 2px` — add a utility class `focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2` to Tailwind if the shadcn default ring style is insufficient
+- [x] Task 10: Implement focus-visible indicators (AC: #9)
+  - [x] 10.1 Verify that the existing `globals.css` focus-visible styles from shadcn/ui apply to all interactive elements in the thread (buttons already have `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` in button.tsx)
+  - [x] 10.2 For any custom interactive elements (summary card buttons, mic bar controls), ensure `:focus-visible` applies `outline: 2px solid var(--primary); outline-offset: 2px` — add a utility class `focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2` to Tailwind if the shadcn default ring style is insufficient
 
-- [ ] Task 11: Create tests (AC: #1-#11)
-  - [ ] 11.1 Create `src/components/interview/conversation-thread.test.tsx`:
+- [x] Task 11: Create tests (AC: #1-#11)
+  - [x] 11.1 Create `src/components/interview/conversation-thread.test.tsx`:
     - Test renders empty thread with no messages
     - Test renders agent message left-aligned with primary-soft background
     - Test renders speech card right-aligned after processing state
     - Test renders reflective summary card with violet background and label
     - Test renders cycle separator between different segment IDs
     - Test 16px gap between same-segment messages and 32px separator gap between segments
-  - [ ] 11.2 Create `src/components/interview/reflective-summary-card.test.tsx`:
+  - [x] 11.2 Create `src/components/interview/reflective-summary-card.test.tsx`:
     - Test streaming state: label visible, no buttons, content updates
     - Test awaiting confirmation state: "Confirm" and "That's not right" buttons visible
     - Test confirmed state: green checkmark badge visible, buttons hidden
@@ -131,14 +131,14 @@ So that I can focus on describing my work.
     - Test "That's not right" click calls `onCorrect` with segmentId
     - Test `aria-label` updates with state
     - Test `aria-live="polite"` present on confirmed badge
-  - [ ] 11.3 Create `src/components/interview/speech-card.test.tsx`:
+  - [x] 11.3 Create `src/components/interview/speech-card.test.tsx`:
     - Test processing state shows "Processing your response..." text
     - Test completed state shows speech text and timestamp
     - Test `aria-live="polite"` on completed card
-  - [ ] 11.4 Create `src/components/interview/typing-indicator.test.tsx`:
+  - [x] 11.4 Create `src/components/interview/typing-indicator.test.tsx`:
     - Test renders three dots
     - Test has `aria-label="Agent is typing"`
-  - [ ] 11.5 Create `src/components/interview/use-interview-stream.test.ts`:
+  - [x] 11.5 Create `src/components/interview/use-interview-stream.test.ts`:
     - Test `sendMessage` dispatches processing state then opens SSE connection
     - Test SSE `message` event with `exchangeType: 'question'` creates agent_question message
     - Test SSE `message` event with `exchangeType: 'reflective_summary'` creates reflective_summary message
@@ -322,9 +322,36 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+None
 
 ### Completion Notes List
+- ConversationThread uses useReducer with typed actions for all state management (no global state)
+- useInterviewStream handles fetch-based SSE parsing (POST, not EventSource) with proper buffer management
+- Reducer has both SET_SUMMARY_STATE_BY_ID and SET_SUMMARY_STATE_BY_SEGMENT for different use cases
+- PATCH_MESSAGE action handles segmentId assignment when done event arrives
+- useAutoScroll uses optional chaining on scrollIntoView for jsdom compatibility
+- AgentMessageCard, SpeechCard, ReflectiveSummaryCard, TypingIndicator, CycleSeparator all use design tokens
+- ReflectiveSummaryCard has full 4-state rendering with aria-label updates per state
+- InterviewFlowController updated to render ConversationThread instead of ActiveInterviewPlaceholder
+- All 35 Story 3.5 tests pass, full suite of 382 tests pass
+- confirmSummary and requestCorrection wired through ConversationThread to ReflectiveSummaryCard
 
 ### File List
+- src/components/interview/conversation-thread.tsx (created)
+- src/components/interview/agent-message-card.tsx (created)
+- src/components/interview/speech-card.tsx (created)
+- src/components/interview/reflective-summary-card.tsx (created)
+- src/components/interview/typing-indicator.tsx (created)
+- src/components/interview/cycle-separator.tsx (created)
+- src/components/interview/use-interview-stream.ts (created)
+- src/components/interview/use-auto-scroll.ts (created)
+- src/components/interview/conversation-thread.test.tsx (created)
+- src/components/interview/reflective-summary-card.test.tsx (created)
+- src/components/interview/speech-card.test.tsx (created)
+- src/components/interview/typing-indicator.test.tsx (created)
+- src/components/interview/use-interview-stream.test.ts (created)
+- src/components/interview/interview-flow-controller.tsx (modified — replaced placeholder with ConversationThread)
+- src/components/interview/interview-flow-controller.test.tsx (modified — updated assertions for ConversationThread)
