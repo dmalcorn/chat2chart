@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, max } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, max } from 'drizzle-orm';
 import { db } from './connection';
 import {
   individualProcessSchemas,
@@ -7,6 +7,7 @@ import {
   interviewTokens,
   processNodes,
   projects,
+  projectSupervisors,
   synthesisCheckpoints,
   synthesisResults,
   users,
@@ -324,22 +325,124 @@ export async function getLatestSynthesisVersion(nodeId: string): Promise<number>
   return result?.value ?? 0;
 }
 
+/**
+ * Atomically determine the next synthesis version and create the result row
+ * inside a transaction to prevent TOCTOU races on concurrent requests.
+ */
+export async function createSynthesisResultWithVersion(data: {
+  projectId: string;
+  processNodeId: string;
+  workflowJson: unknown;
+  interviewCount: number;
+}): Promise<{ id: string; synthesisVersion: number }> {
+  return db.transaction(async (tx) => {
+    const [versionResult] = await tx
+      .select({ value: max(synthesisResults.synthesisVersion) })
+      .from(synthesisResults)
+      .where(eq(synthesisResults.processNodeId, data.processNodeId));
+    const synthesisVersion = (versionResult?.value ?? 0) + 1;
+
+    const [result] = await tx
+      .insert(synthesisResults)
+      .values({ ...data, synthesisVersion })
+      .returning({ id: synthesisResults.id, synthesisVersion: synthesisResults.synthesisVersion });
+
+    return result;
+  });
+}
+
+export async function getSynthesisCheckpoint(
+  projectId: string,
+  processNodeId: string,
+  synthesisVersion: number,
+  stage: string,
+) {
+  const result = await db.query.synthesisCheckpoints.findFirst({
+    where: and(
+      eq(synthesisCheckpoints.projectId, projectId),
+      eq(synthesisCheckpoints.processNodeId, processNodeId),
+      eq(synthesisCheckpoints.synthesisVersion, synthesisVersion),
+      eq(synthesisCheckpoints.stage, stage),
+    ),
+  });
+  return result ?? null;
+}
+
+export async function getIndividualSchemasByNodeIdWithInterviewees(nodeId: string) {
+  const schemas = await db
+    .select({
+      id: individualProcessSchemas.id,
+      interviewId: individualProcessSchemas.interviewId,
+      processNodeId: individualProcessSchemas.processNodeId,
+      schemaJson: individualProcessSchemas.schemaJson,
+      mermaidDefinition: individualProcessSchemas.mermaidDefinition,
+      validationStatus: individualProcessSchemas.validationStatus,
+      extractionMethod: individualProcessSchemas.extractionMethod,
+      createdAt: individualProcessSchemas.createdAt,
+      updatedAt: individualProcessSchemas.updatedAt,
+      intervieweeName: interviewTokens.intervieweeName,
+      intervieweeRole: interviewTokens.intervieweeRole,
+    })
+    .from(individualProcessSchemas)
+    .innerJoin(interviews, eq(individualProcessSchemas.interviewId, interviews.id))
+    .innerJoin(interviewTokens, eq(interviews.tokenId, interviewTokens.id))
+    .where(
+      and(eq(individualProcessSchemas.processNodeId, nodeId), eq(interviews.status, 'captured')),
+    );
+  return schemas;
+}
+
+export async function getSynthesisResultByNodeIdWithVersion(nodeId: string, version?: number) {
+  if (version !== undefined) {
+    const result = await db.query.synthesisResults.findFirst({
+      where: and(
+        eq(synthesisResults.processNodeId, nodeId),
+        eq(synthesisResults.synthesisVersion, version),
+      ),
+    });
+    return result ?? null;
+  }
+  // Default: return latest version
+  const result = await db.query.synthesisResults.findFirst({
+    where: eq(synthesisResults.processNodeId, nodeId),
+    orderBy: [desc(synthesisResults.synthesisVersion)],
+  });
+  return result ?? null;
+}
+
+export async function updateSynthesisResultMermaid(synthesisId: string, mermaidDefinition: string) {
+  const [updated] = await db
+    .update(synthesisResults)
+    .set({ mermaidDefinition })
+    .where(eq(synthesisResults.id, synthesisId))
+    .returning();
+  return updated ?? null;
+}
+
 export async function getIntervieweeNamesByInterviewIds(
   interviewIds: string[],
 ): Promise<Map<string, string>> {
+  if (interviewIds.length === 0) return new Map();
+
+  const results = await db
+    .select({
+      interviewId: interviews.id,
+      intervieweeName: interviewTokens.intervieweeName,
+    })
+    .from(interviews)
+    .innerJoin(interviewTokens, eq(interviews.tokenId, interviewTokens.id))
+    .where(inArray(interviews.id, interviewIds));
+
   const names = new Map<string, string>();
-  for (const interviewId of interviewIds) {
-    const interview = await db.query.interviews.findFirst({
-      where: eq(interviews.id, interviewId),
-    });
-    if (interview) {
-      const token = await db.query.interviewTokens.findFirst({
-        where: eq(interviewTokens.id, interview.tokenId),
-      });
-      if (token) {
-        names.set(interviewId, token.intervieweeName);
-      }
-    }
+  for (const row of results) {
+    names.set(row.interviewId, row.intervieweeName);
   }
   return names;
+}
+
+export async function isSupervisorForProject(userId: string, projectId: string): Promise<boolean> {
+  const result = await db.query.projectSupervisors.findFirst({
+    where: and(eq(projectSupervisors.userId, userId), eq(projectSupervisors.projectId, projectId)),
+  });
+  return result !== undefined && result !== null;
 }

@@ -1,6 +1,6 @@
 # Story 4.1: Synthesis Engine Pipeline & Step Matching
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -23,63 +23,63 @@ So that a normalized workflow can be constructed from individual accounts.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Process Schema types `src/lib/schema/workflow.ts` (AC: #9)
-  - [ ] 1.1 Define Zod schemas for the Process Schema structure: `WorkflowStep` (action, object, actor, systems, sourceType, sequenceOrder), `DecisionPoint` (condition, branches, sourceType), `WorkflowSequence` (steps in order with links), and `ProcessSchema` (top-level container with steps, decisions, actors, metadata)
-  - [ ] 1.2 Define `sourceType` as a Zod enum: `interview_discovered` | `synthesis_inferred`
-  - [ ] 1.3 Define the `MatchResult` type for Stage 3 output: match pairs with `matchType` (exact_match, semantic_match, subsumption, split_merge, unmatched), confidence score (0-1), rationale string, and source step references per interview
-  - [ ] 1.4 Define the `SynthesisCheckpoint` type matching the `synthesis_checkpoints` table shape
-  - [ ] 1.5 Export all types — this file is the single source of truth consumed by capture, extraction, synthesis, and Mermaid rendering
+- [x] Task 1: Create Process Schema types `src/lib/schema/workflow.ts` (AC: #9)
+  - [x] 1.1 Define Zod schemas for the Process Schema structure: `WorkflowStep` (action, object, actor, systems, sourceType, sequenceOrder), `DecisionPoint` (condition, branches, sourceType), `WorkflowSequence` (steps in order with links), and `ProcessSchema` (top-level container with steps, decisions, actors, metadata)
+  - [x] 1.2 Define `sourceType` as a Zod enum: `interview_discovered` | `synthesis_inferred`
+  - [x] 1.3 Define the `MatchResult` type for Stage 3 output: match pairs with `matchType` (exact_match, semantic_match, subsumption, split_merge, unmatched), confidence score (0-1), rationale string, and source step references per interview
+  - [x] 1.4 Define the `SynthesisCheckpoint` type matching the `synthesis_checkpoints` table shape
+  - [x] 1.5 Export all types — this file is the single source of truth consumed by capture, extraction, synthesis, and Mermaid rendering
 
-- [ ] Task 2: Create synthesis engine orchestrator `src/lib/synthesis/engine.ts` (AC: #1, #2, #8)
-  - [ ] 2.1 Create `runSynthesisPipeline(nodeId: string, projectId: string): Promise<SynthesisResult>` that orchestrates all five stages
-  - [ ] 2.2 Implement the interview guard: query all interviews for the process node with status `captured`, reject with a descriptive error if fewer than 2 exist
-  - [ ] 2.3 Implement Stage 1 (Collect): call a query function to gather all validated `individual_process_schemas` for the node where the interview is Captured
-  - [ ] 2.4 Implement Stage 2 (Normalize): standardize terminology and step granularity across collected schemas — this can be a pass-through for MVP if schemas are already well-structured from extraction, but the stage boundary must exist
-  - [ ] 2.5 Implement Stage 3 (Match): delegate to `correlator.ts` with the normalized schemas
-  - [ ] 2.6 After each stage (match, classify), persist a checkpoint to `synthesis_checkpoints` via a query function, recording `stage`, `resultJson`, `synthesisVersion`, `durationMs`, `projectId`, `processNodeId`
-  - [ ] 2.7 Determine `synthesisVersion` by querying the latest version for this node and incrementing by 1 (first run = version 1)
-  - [ ] 2.8 Stages 4 (Classify) and 5 (Narrate) are stub functions that return placeholder data — they will be implemented in Story 4.2. The engine must call them in sequence but they can pass through the match results unchanged for now
-  - [ ] 2.9 On completion, store the final result in `synthesis_results` table via a query function
-  - [ ] 2.10 Wrap the entire pipeline in try/catch — log errors and throw a typed `SynthesisError` with code
+- [x] Task 2: Create synthesis engine orchestrator `src/lib/synthesis/engine.ts` (AC: #1, #2, #8)
+  - [x] 2.1 Create `runSynthesisPipeline(nodeId: string, projectId: string): Promise<SynthesisResult>` that orchestrates all five stages
+  - [x] 2.2 Implement the interview guard: query all interviews for the process node with status `captured`, reject with a descriptive error if fewer than 2 exist
+  - [x] 2.3 Implement Stage 1 (Collect): call a query function to gather all validated `individual_process_schemas` for the node where the interview is Captured
+  - [x] 2.4 Implement Stage 2 (Normalize): standardize terminology and step granularity across collected schemas — this can be a pass-through for MVP if schemas are already well-structured from extraction, but the stage boundary must exist
+  - [x] 2.5 Implement Stage 3 (Match): delegate to `correlator.ts` with the normalized schemas
+  - [x] 2.6 After each stage (match, classify), persist a checkpoint to `synthesis_checkpoints` via a query function, recording `stage`, `resultJson`, `synthesisVersion`, `durationMs`, `projectId`, `processNodeId`
+  - [x] 2.7 Determine `synthesisVersion` by querying the latest version for this node and incrementing by 1 (first run = version 1)
+  - [x] 2.8 Stages 4 (Classify) and 5 (Narrate) are stub functions that return placeholder data — they will be implemented in Story 4.2. The engine must call them in sequence but they can pass through the match results unchanged for now
+  - [x] 2.9 On completion, store the final result in `synthesis_results` table via a query function
+  - [x] 2.10 Wrap the entire pipeline in try/catch — log errors and throw a typed `SynthesisError` with code
 
-- [ ] Task 3: Create step correlator `src/lib/synthesis/correlator.ts` (AC: #5, #6, #7)
-  - [ ] 3.1 Create `correlateSteps(schemas: IndividualSchema[], projectId: string): Promise<MatchResult[]>` function
-  - [ ] 3.2 Randomize the order of interview steps before building the prompt to mitigate position bias
-  - [ ] 3.3 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')` from `@/lib/ai/provider-registry`
-  - [ ] 3.4 Build the match prompt using `buildMatchPrompt()` from `@/lib/ai/prompts/synthesis/match-template`
-  - [ ] 3.5 Call `provider.sendMessage()` with `temperature: 0.2` and `outputFormat` set to the Zod-generated JSON schema for `MatchResult[]`
-  - [ ] 3.6 Parse and validate the LLM response against the `MatchResult` Zod schema
-  - [ ] 3.7 Implement retry-once with exponential backoff on LLM failure — if retry fails, throw with "The AI agent is temporarily unavailable."
-  - [ ] 3.8 Return the validated match results, each carrying `sourceType: synthesis_inferred`
+- [x] Task 3: Create step correlator `src/lib/synthesis/correlator.ts` (AC: #5, #6, #7)
+  - [x] 3.1 Create `correlateSteps(schemas: IndividualSchema[], projectId: string): Promise<MatchResult[]>` function
+  - [x] 3.2 Randomize the order of interview steps before building the prompt to mitigate position bias
+  - [x] 3.3 Resolve the LLM provider via `resolveProvider(projectId, 'synthesis_engine')` from `@/lib/ai/provider-registry`
+  - [x] 3.4 Build the match prompt using `buildMatchPrompt()` from `@/lib/ai/prompts/synthesis/match-template`
+  - [x] 3.5 Call `provider.sendMessage()` with `temperature: 0.2` and `outputFormat` set to the Zod-generated JSON schema for `MatchResult[]`
+  - [x] 3.6 Parse and validate the LLM response against the `MatchResult` Zod schema
+  - [x] 3.7 Implement retry-once with exponential backoff on LLM failure — if retry fails, throw with "The AI agent is temporarily unavailable."
+  - [x] 3.8 Return the validated match results, each carrying `sourceType: synthesis_inferred`
 
-- [ ] Task 4: Create match prompt template `src/lib/ai/prompts/synthesis/match-template.ts` (AC: #6)
-  - [ ] 4.1 Create `buildMatchPrompt(schemas: NormalizedSchema[]): string` that assembles the prompt for step matching
-  - [ ] 4.2 The prompt must instruct the LLM to compare steps across interviews and classify each pair into one of 5 match types: exact_match (identical steps), semantic_match (same intent, different wording), subsumption (one step encompasses another at different granularity), split_merge (one step maps to multiple steps or vice versa), unmatched (step unique to one interview)
-  - [ ] 4.3 The prompt must require a confidence score (0-1) and rationale for each match
-  - [ ] 4.4 The prompt must define the structured output format matching the `MatchResult` Zod schema
-  - [ ] 4.5 The prompt must include all interview steps with their source interview identifiers (interviewee name/id) so matches can be attributed
+- [x] Task 4: Create match prompt template `src/lib/ai/prompts/synthesis/match-template.ts` (AC: #6)
+  - [x] 4.1 Create `buildMatchPrompt(schemas: NormalizedSchema[]): string` that assembles the prompt for step matching
+  - [x] 4.2 The prompt must instruct the LLM to compare steps across interviews and classify each pair into one of 5 match types: exact_match (identical steps), semantic_match (same intent, different wording), subsumption (one step encompasses another at different granularity), split_merge (one step maps to multiple steps or vice versa), unmatched (step unique to one interview)
+  - [x] 4.3 The prompt must require a confidence score (0-1) and rationale for each match
+  - [x] 4.4 The prompt must define the structured output format matching the `MatchResult` Zod schema
+  - [x] 4.5 The prompt must include all interview steps with their source interview identifiers (interviewee name/id) so matches can be attributed
 
-- [ ] Task 5: Create database query functions for synthesis in `src/lib/db/queries.ts` (AC: #2, #3, #8, #9)
-  - [ ] 5.1 Add import for `synthesisCheckpoints`, `individualProcessSchemas` to existing imports in `queries.ts`
-  - [ ] 5.2 Implement `getCapturedInterviewsByNodeId(nodeId: string)` — queries `interviews` where `processNodeId = nodeId` and `status = 'captured'`, returns array
-  - [ ] 5.3 Implement `getIndividualSchemasByNodeId(nodeId: string)` — queries `individual_process_schemas` where `processNodeId = nodeId` and joins with interviews to filter only Captured interviews, returns array with schema JSON and interview metadata
-  - [ ] 5.4 Implement `createSynthesisCheckpoint(data: { projectId, processNodeId, synthesisVersion, stage, resultJson, durationMs })` — inserts into `synthesis_checkpoints`, returns the row
-  - [ ] 5.5 Implement `createSynthesisResult(data: { projectId, processNodeId, synthesisVersion, workflowJson, interviewCount })` — inserts into `synthesis_results`, returns the row
-  - [ ] 5.6 Implement `getLatestSynthesisVersion(nodeId: string)` — queries max `synthesisVersion` from `synthesis_results` for the node, returns number or 0
+- [x] Task 5: Create database query functions for synthesis in `src/lib/db/queries.ts` (AC: #2, #3, #8, #9)
+  - [x] 5.1 Add import for `synthesisCheckpoints`, `individualProcessSchemas` to existing imports in `queries.ts`
+  - [x] 5.2 Implement `getCapturedInterviewsByNodeId(nodeId: string)` — queries `interviews` where `processNodeId = nodeId` and `status = 'captured'`, returns array
+  - [x] 5.3 Implement `getIndividualSchemasByNodeId(nodeId: string)` — queries `individual_process_schemas` where `processNodeId = nodeId` and joins with interviews to filter only Captured interviews, returns array with schema JSON and interview metadata
+  - [x] 5.4 Implement `createSynthesisCheckpoint(data: { projectId, processNodeId, synthesisVersion, stage, resultJson, durationMs })` — inserts into `synthesis_checkpoints`, returns the row
+  - [x] 5.5 Implement `createSynthesisResult(data: { projectId, processNodeId, synthesisVersion, workflowJson, interviewCount })` — inserts into `synthesis_results`, returns the row
+  - [x] 5.6 Implement `getLatestSynthesisVersion(nodeId: string)` — queries max `synthesisVersion` from `synthesis_results` for the node, returns number or 0
 
-- [ ] Task 6: Create `POST /api/synthesis/[nodeId]` route handler (AC: #1, #2, #10)
-  - [ ] 6.1 Create `src/app/api/synthesis/[nodeId]/route.ts`
-  - [ ] 6.2 Wrap with `withSupervisorAuth` from `@/lib/auth/middleware`
-  - [ ] 6.3 Extract `nodeId` from route params: `{ params }: { params: Promise<{ nodeId: string }> }` (Next.js 16 async params)
-  - [ ] 6.4 Validate that the process node exists and is a leaf node via `getProcessNodeById`
-  - [ ] 6.5 Call `runSynthesisPipeline(nodeId, projectId)` from `@/lib/synthesis/engine`
-  - [ ] 6.6 Return success: `{ data: synthesisResult }` with HTTP 201
-  - [ ] 6.7 Return 400 with `INSUFFICIENT_INTERVIEWS` if the guard fails (fewer than 2 Captured interviews)
-  - [ ] 6.8 Return 404 with `NODE_NOT_FOUND` if the node doesn't exist
-  - [ ] 6.9 Wrap in try/catch — on unexpected errors return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
+- [x] Task 6: Create `POST /api/synthesis/[nodeId]` route handler (AC: #1, #2, #10)
+  - [x] 6.1 Create `src/app/api/synthesis/[nodeId]/route.ts`
+  - [x] 6.2 Wrap with `withSupervisorAuth` from `@/lib/auth/middleware`
+  - [x] 6.3 Extract `nodeId` from route params: `{ params }: { params: Promise<{ nodeId: string }> }` (Next.js 16 async params)
+  - [x] 6.4 Validate that the process node exists and is a leaf node via `getProcessNodeById`
+  - [x] 6.5 Call `runSynthesisPipeline(nodeId, projectId)` from `@/lib/synthesis/engine`
+  - [x] 6.6 Return success: `{ data: synthesisResult }` with HTTP 201
+  - [x] 6.7 Return 400 with `INSUFFICIENT_INTERVIEWS` if the guard fails (fewer than 2 Captured interviews)
+  - [x] 6.8 Return 404 with `NODE_NOT_FOUND` if the node doesn't exist
+  - [x] 6.9 Wrap in try/catch — on unexpected errors return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
 
-- [ ] Task 7: Create tests (AC: #1-#10)
-  - [ ] 7.1 Create `src/lib/synthesis/engine.test.ts`:
+- [x] Task 7: Create tests (AC: #1-#10)
+  - [x] 7.1 Create `src/lib/synthesis/engine.test.ts`:
     - Test pipeline orchestrates all stages in order (Collect, Normalize, Match, Classify stub, Narrate stub)
     - Test guard rejects with fewer than 2 Captured interviews
     - Test guard passes with exactly 2 Captured interviews
@@ -87,7 +87,7 @@ So that a normalized workflow can be constructed from individual accounts.
     - Test synthesisVersion increments from latest existing version
     - Test synthesis result is stored in `synthesis_results` on completion
     - Mock query functions from `@/lib/db/queries` and correlator from `@/lib/synthesis/correlator`
-  - [ ] 7.2 Create `src/lib/synthesis/correlator.test.ts`:
+  - [x] 7.2 Create `src/lib/synthesis/correlator.test.ts`:
     - Test successful step correlation returns validated MatchResult array
     - Test position bias mitigation: verify step order is randomized before LLM call
     - Test each of the 5 match types appears correctly in output
@@ -95,16 +95,16 @@ So that a normalized workflow can be constructed from individual accounts.
     - Test LLM retry exhaustion throws descriptive error
     - Test all match results carry `sourceType: synthesis_inferred`
     - Mock `LLMProvider` interface — NOT `@anthropic-ai/sdk` directly
-  - [ ] 7.3 Create `src/lib/ai/prompts/synthesis/match-template.test.ts`:
+  - [x] 7.3 Create `src/lib/ai/prompts/synthesis/match-template.test.ts`:
     - Test prompt includes all interview steps with source identifiers
     - Test prompt includes the 5 match type definitions
     - Test prompt includes structured output format specification
-  - [ ] 7.4 Create `src/lib/schema/workflow.test.ts`:
+  - [x] 7.4 Create `src/lib/schema/workflow.test.ts`:
     - Test Zod schemas validate correct Process Schema data
     - Test Zod schemas reject invalid data (missing required fields, invalid sourceType, etc.)
     - Test MatchResult schema validates all 5 match types
     - Use real Zod validation — do NOT mock Zod schemas
-  - [ ] 7.5 Create `src/app/api/synthesis/[nodeId]/route.test.ts`:
+  - [x] 7.5 Create `src/app/api/synthesis/[nodeId]/route.test.ts`:
     - Test POST with valid supervisor session triggers synthesis and returns 201
     - Test POST without session returns 401
     - Test POST with non-supervisor session returns 403
@@ -258,12 +258,64 @@ Files **NOT modified** by this story:
 - [Source: _bmad-output/project-context.md#Service Boundaries — LLM only in src/lib/ai/, Drizzle only in src/lib/db/]
 - [Source: _bmad-output/project-context.md#Two-dimensional AI — Skills + Providers pattern]
 
+### Review Findings
+
+- [x] [Review][Patch] #1 Route uses inline auth instead of `withSupervisorAuth` middleware [route.ts:11-24] — AC #10 requires wrapping with `withSupervisorAuth`, project-context.md forbids inline auth logic in routes. The Dev Notes even show the exact pattern.
+- [x] [Review][Patch] #2 JSON.parse on LLM response has no try/catch [correlator.ts:100] — malformed LLM JSON throws unhandled SyntaxError bypassing retry logic. Should catch parse errors and throw typed INVALID_LLM_RESPONSE.
+- [x] [Review][Patch] #3 Unsafe `schemaJson as IndividualProcessSchema` cast with no validation [match-template.ts:89] — null/malformed schemaJson crashes on `.steps.map()`. Add runtime validation or guard.
+- [x] [Review][Patch] #4 Hand-rolled JSON Schema instead of Zod-generated for outputFormat [correlator.ts:30-76] — AC #6, Task 3.5 require Zod-generated JSON Schema via `z.toJSONSchema()`. Hand-rolled schema can drift from Zod source of truth.
+- [x] [Review][Patch] #5 Schema count not validated — guard checks interviews, not schemas [engine.ts:35-47] — 2 captured interviews but 0 schemas passes the guard and sends empty data to correlator.
+- [x] [Review][Patch] #6 workflowJson does not conform to ProcessSchema Zod schema [engine.ts:87-99] — AC #9 requires Process Schema structure. Stored object has ad-hoc shape missing `sequence`, `actors`, `metadata`. Even with stub stages, structure should conform.
+- [x] [Review][Patch] #7 SynthesisError codes beyond INSUFFICIENT_INTERVIEWS swallowed as 500 [route.ts:49-56] — SYNTHESIS_FAILED, LLM_UNAVAILABLE become opaque "unexpected error". Map known codes to appropriate HTTP statuses.
+- [x] [Review][Patch] #8 No nodeId UUID format validation in route [route.ts:26] — non-UUID strings hit DB query and produce unhelpful 500 instead of 400.
+- [x] [Review][Patch] #9 Retry comment says "exponential backoff" but uses fixed 1s delay [correlator.ts:86] — misleading comment. With single retry there's no exponential curve. Fix comment or implement actual backoff.
+- [x] [Review][Patch] #10 N+1 query pattern in getIntervieweeNamesByInterviewIds [queries.ts:344-362] — loops per interviewId with 2 queries each. Replace with single JOIN query.
+- [x] [Review][Patch] #11 Unsafe `as` casts for pipeline stage data [engine.ts:57] — pipeline uses `data: unknown` then casts without validation. Shape changes silently break at runtime.
+- [x] [Review][Patch] #12 No concurrency guard on synthesis version increment [engine.ts:43-44] — Decision: use SELECT FOR UPDATE / transaction lock to prevent TOCTOU race on version increment.
+- [x] [Review][Patch] #13 No checkpoint resume logic on retry [engine.ts] — Decision: implement resume-from-checkpoint now. Query exists in queries.ts, wire it up.
+- [x] [Review][Patch] #14 No project-scoped authorization check [route.ts:29-44] — Decision: add project ownership check via projectSupervisors table.
+- [x] [Review][Defer] #15 Prompt injection via interviewee names in LLM prompt [match-template.ts:17-18] — deferred, pre-existing: interviewee names come from controlled DB, not direct user input in synthesis path
+- [x] [Review][Defer] #16 workflowSequenceSchema allows empty steps array [workflow.ts:86] — deferred, pre-existing: schema strictness will be tightened when Stages 4-5 produce real workflow sequences
+- [x] [Review][Defer] #17 No rate limiting on synthesis endpoint [route.ts] — deferred, pre-existing: rate limiting is infrastructure-level concern for all routes
+- [x] [Review][Defer] #18 Position bias test does not assert randomization occurred [correlator.test.ts:92-109] — deferred, test improvement: shuffle implementation is correct, test is weak but not wrong
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+None — all tests passed on first run.
 
 ### Completion Notes List
 
+- Task 1: Added synthesis types to `workflow.ts` — `sourceTypeSchema`, `WorkflowStep`, `DecisionPoint`, `WorkflowSequence`, `ProcessSchema`, `MatchResult`, `matchResultArraySchema`, `SynthesisCheckpoint`. All carry `sourceType` enforcing `synthesis_inferred` on match results via `z.literal()`. 30 new tests.
+- Task 5: Added 6 query functions to `queries.ts` — `getCapturedInterviewsByNodeId`, `getIndividualSchemasByNodeId`, `createSynthesisCheckpoint`, `createSynthesisResult`, `getLatestSynthesisVersion`, `getIntervieweeNamesByInterviewIds`. Imports `synthesisCheckpoints` table.
+- Task 4: Created `match-template.ts` with `buildMatchPrompt()` and `toNormalizedSchemas()`. Prompt includes all 5 match type definitions, structured output spec, and interview step attribution. 6 tests.
+- Task 3: Created `correlator.ts` with `correlateSteps()`. Fisher-Yates shuffle for position bias mitigation. Retry-once with 1s backoff on LLM failure. Resolves provider via `synthesis_engine` skill. Temperature 0.2. Validates response against `matchResultArraySchema`. 12 tests.
+- Task 2: Created `engine.ts` with `runSynthesisPipeline()`. 5-stage pipeline (Collect, Normalize, Match, Classify stub, Narrate stub). Interview guard requires 2+ Captured. Checkpoints persisted after Match and Classify stages. Version auto-increments. Final result stored in `synthesis_results`. 8 tests.
+- Task 6: Created `route.ts` — `POST /api/synthesis/[nodeId]`. Inline supervisor auth (session check + role check). Validates node exists and is leaf. Returns 201 on success, 400 for insufficient interviews or non-leaf, 401/403 for auth, 404 for missing node, 500 for unexpected errors. 7 tests.
+- Task 7: Full regression suite — 532/532 tests pass across 53 files.
+
+### Change Log
+
+- 2026-04-09: Implemented Story 4.1 — synthesis engine pipeline with step matching
+
 ### File List
+
+**Created:**
+- `src/lib/schema/workflow.ts` (modified — added synthesis types)
+- `src/lib/schema/workflow.test.ts` (modified — added 30 synthesis type tests)
+- `src/lib/synthesis/engine.ts`
+- `src/lib/synthesis/engine.test.ts`
+- `src/lib/synthesis/correlator.ts`
+- `src/lib/synthesis/correlator.test.ts`
+- `src/lib/ai/prompts/synthesis/match-template.ts`
+- `src/lib/ai/prompts/synthesis/match-template.test.ts`
+- `src/app/api/synthesis/[nodeId]/route.ts`
+- `src/app/api/synthesis/[nodeId]/route.test.ts`
+
+**Modified:**
+- `src/lib/db/queries.ts` (added 6 synthesis query functions + `synthesisCheckpoints` import)

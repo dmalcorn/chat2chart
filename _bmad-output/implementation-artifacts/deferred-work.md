@@ -65,3 +65,10 @@
 - `transitionInterview` has TOCTOU — read-then-write without a transaction in `src/lib/synthesis/state-machine.ts`. Two concurrent transitions can both pass validation. Needs a DB-level `SELECT ... FOR UPDATE` or optimistic locking. Pre-existing architectural pattern.
 - `parseFrontmatter` multiline YAML handling is fragile — inline parser in `src/lib/interview/skill-loader.ts` doesn't handle all YAML multiline edge cases (blank lines in `>-` blocks). Works for current skill files. A proper YAML parser would be the real fix but adds a dependency.
 - `session.ts` bypassed by message route — `src/lib/interview/session.ts` manages session state per Story 3.2, but `src/app/api/interview/[token]/messages/route.ts` implements its own inline segment/sequence logic. These should converge when Story 3.5 (Conversation Thread UI) lands. The session module uses `getExchangeCountByInterviewId` while the route uses `getMaxSequenceNumber` — different strategies for the same concern.
+
+## Deferred from: code review of story 4-1 (2026-04-09)
+
+- Prompt injection via interviewee names in LLM prompt [match-template.ts:17-18] — interviewee names come from controlled DB, not direct user input in synthesis path. Revisit if user-editable names are added.
+- workflowSequenceSchema allows empty steps array [workflow.ts:86] — schema strictness will be tightened when Stages 4-5 produce real workflow sequences in Story 4.2.
+- No rate limiting on synthesis endpoint [route.ts] — rate limiting is infrastructure-level concern for all routes, not specific to this story.
+- Position bias test does not assert randomization occurred [correlator.test.ts:92-109] — shuffle implementation is correct (Fisher-Yates), test is weak but not wrong. Improve when test suite is hardened.
