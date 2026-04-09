@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    env:
+      ANTHROPIC_API_KEY: sk-ant-placeholder
+      SESSION_SECRET: ci-test-secret-minimum-32-characters-long
+      FIRST_SUPERVISOR_EMAIL: ci@test.com
+      FIRST_SUPERVISOR_PASSWORD: ci-test-password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test:unit
