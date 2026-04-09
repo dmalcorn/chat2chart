@@ -67,7 +67,15 @@ export async function narrateDivergences(input: NarrateInput): Promise<Narration
   }
 
   let result: NarrationResult;
-  const parsed = JSON.parse(response);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(response);
+  } catch {
+    throw new SynthesisNarrationError(
+      'LLM returned malformed JSON response',
+      'INVALID_LLM_RESPONSE',
+    );
+  }
   const validation = narrationResultSchema.safeParse(parsed);
 
   if (!validation.success) {

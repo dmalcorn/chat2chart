@@ -315,3 +315,10 @@ Claude Opus 4.6 (1M context)
 - `src/app/api/synthesis/[nodeId]/route.test.ts` — MODIFIED: Added GET tests, updated mock strategy for middleware wrapper
 - `src/lib/db/queries.ts` — MODIFIED: Added `getIndividualSchemasByNodeIdWithInterviewees`, `getSynthesisResultByNodeIdWithVersion`, `updateSynthesisResultMermaid`, `isSupervisorForProject`
 - `src/lib/synthesis/engine.ts` — MODIFIED: Added Mermaid generation after synthesis result creation
+
+### Review Findings (Epic 4 Review — 2026-04-09)
+
+- [x] [Review][Patch] #1 Dead code: stepToSubgraph map built but never used [mermaid-generator.ts:41-48] — the map is populated but never referenced. subgraphSteps Set handles the same concern.
+- [x] [Review][Defer] #2 No concurrency guard on POST synthesis endpoint [route.ts] — two simultaneous POST requests can trigger parallel pipelines. createSynthesisResultWithVersion transaction prevents version collision, but duplicate synthesis runs waste resources.
+- [x] [Review][Defer] #3 Step IDs not sanitized for Mermaid syntax injection [mermaid-generator.ts:106-111] — IDs are UUIDs from DB (controlled), not user input. Low risk.
+- [x] [Review][Defer] #4 Fixed 1s retry delay in correlator [correlator.ts:52] — already identified in Story 4.1 review #9

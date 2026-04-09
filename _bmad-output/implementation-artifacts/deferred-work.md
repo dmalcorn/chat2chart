@@ -72,3 +72,11 @@
 - workflowSequenceSchema allows empty steps array [workflow.ts:86] — schema strictness will be tightened when Stages 4-5 produce real workflow sequences in Story 4.2.
 - No rate limiting on synthesis endpoint [route.ts] — rate limiting is infrastructure-level concern for all routes, not specific to this story.
 - Position bias test does not assert randomization occurred [correlator.test.ts:92-109] — shuffle implementation is correct (Fisher-Yates), test is weak but not wrong. Improve when test suite is hardened.
+
+## Deferred from: code review of Epic 4 (2026-04-09)
+
+- Checkpoint version race — `checkpointVersion` computed outside transaction in `engine.ts:73-74`. Final result insert uses transactional `createSynthesisResultWithVersion`, but checkpoint writes use the non-transactional version. Low risk: duplicate checkpoint rows, not corrupt results.
+- `toNormalizedSchemas` silently returns empty steps array for malformed `schemaJson` [match-template.ts:93-100] — data should be validated at extraction time (Story 3.6). Defensive fallback is reasonable for now.
+- No concurrency guard on POST `/api/synthesis/[nodeId]` — parallel requests can trigger duplicate synthesis runs. `createSynthesisResultWithVersion` transaction prevents version collision, but wasted compute. Consider advisory lock or in-progress status check.
+- Step IDs not sanitized for Mermaid syntax injection [mermaid-generator.ts:106-111] — IDs are DB-generated UUIDs (controlled input). Revisit if user-editable IDs are added.
+- Fixed 1s retry delay in correlator [correlator.ts:52] — single retry with fixed delay. No thundering herd risk at MVP scale. Consider exponential backoff with jitter for production.

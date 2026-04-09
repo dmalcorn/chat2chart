@@ -146,12 +146,30 @@ describe('narrationResultSchema', () => {
   });
 });
 
+function makeMatchResult(overrides?: Record<string, unknown>) {
+  return {
+    matchType: 'exact_match',
+    confidence: 0.95,
+    rationale: 'Steps are identical',
+    sourceSteps: [
+      {
+        interviewId: randomUUID(),
+        intervieweeName: 'Test User',
+        stepId: randomUUID(),
+        stepLabel: 'Test Step',
+      },
+    ],
+    sourceType: 'synthesis_inferred',
+    ...overrides,
+  };
+}
+
 describe('synthesisOutputSchema', () => {
   it('validates complete synthesis result', () => {
     const input = {
-      normalizedWorkflow: [{ matchType: 'exact_match' }],
+      normalizedWorkflow: [makeMatchResult()],
       divergenceAnnotations: [makeDivergence()],
-      matchMetadata: [{ matchType: 'exact_match' }],
+      matchMetadata: [makeMatchResult()],
       narrativeSummary: 'Summary of all divergences.',
       interviewCount: 3,
       sourceInterviewIds: [randomUUID(), randomUUID(), randomUUID()],

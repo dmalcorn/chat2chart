@@ -17,6 +17,7 @@ export type ClassifyInput = {
   individualSchemas: Array<{
     interviewId: string;
     intervieweeName: string;
+    intervieweeRole: string | null;
     schemaJson: IndividualProcessSchema;
   }>;
 };
@@ -66,7 +67,15 @@ export async function classifyDivergences(input: ClassifyInput): Promise<Classif
   }
 
   let result: ClassificationResult;
-  const parsed = JSON.parse(response);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(response);
+  } catch {
+    throw new SynthesisClassificationError(
+      'LLM returned malformed JSON response',
+      'INVALID_LLM_RESPONSE',
+    );
+  }
   const validation = classificationResultSchema.safeParse(parsed);
 
   if (!validation.success) {

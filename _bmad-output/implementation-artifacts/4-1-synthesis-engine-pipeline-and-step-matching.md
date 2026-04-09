@@ -279,6 +279,14 @@ Files **NOT modified** by this story:
 - [x] [Review][Defer] #17 No rate limiting on synthesis endpoint [route.ts] — deferred, pre-existing: rate limiting is infrastructure-level concern for all routes
 - [x] [Review][Defer] #18 Position bias test does not assert randomization occurred [correlator.test.ts:92-109] — deferred, test improvement: shuffle implementation is correct, test is weak but not wrong
 
+### Review Findings (Epic 4 Review — 2026-04-09)
+
+- [x] [Review][Patch] #1 synthesisOutput shape does not match SynthesisWorkflowJson — Mermaid generation silently fails [engine.ts:208-209] — Decision: add transformation step to convert MatchResult[] into SynthesisWorkflowStep[] + SynthesisWorkflowLink[] before Mermaid generation and storage. Remove `as unknown as` cast.
+- [x] [Review][Patch] #2 SynthesisCorrelationError/ClassificationError/NarrationError not caught by engine error handler [engine.ts:225-231] — catch block only checks `instanceof SynthesisError`, so sub-module errors lose their original code (LLM_UNAVAILABLE, INVALID_LLM_RESPONSE) and become generic SYNTHESIS_FAILED.
+- [x] [Review][Patch] #3 synthesisOutputSchema uses z.unknown() for normalizedWorkflow and matchMetadata [synthesis.ts:65,67] — defeats Zod validation for sourceType enforcement on workflow and match data. AC#9 requires all elements carry sourceType.
+- [x] [Review][Defer] #4 Checkpoint version race — checkpointVersion computed outside transaction [engine.ts:73-74] — partially addressed by createSynthesisResultWithVersion transaction for final insert; checkpoint race is low risk (duplicate rows, not corrupt data)
+- [x] [Review][Defer] #5 toNormalizedSchemas silently returns empty steps for malformed schemaJson [match-template.ts:93-100] — data should be validated at extraction time; defensive fallback is reasonable
+
 ## Dev Agent Record
 
 ### Agent Model Used

@@ -8,11 +8,16 @@ import {
   getSynthesisCheckpoint,
   updateSynthesisResultMermaid,
 } from '@/lib/db/queries';
-import { correlateSteps } from './correlator';
-import { classifyDivergences } from './divergence';
-import { narrateDivergences } from './narrator';
+import { correlateSteps, SynthesisCorrelationError } from './correlator';
+import { classifyDivergences, SynthesisClassificationError } from './divergence';
+import { narrateDivergences, SynthesisNarrationError } from './narrator';
 import { generateSynthesisMermaid } from './mermaid-generator';
-import type { SynthesisWorkflowJson } from './mermaid-generator';
+import type {
+  SynthesisWorkflowJson,
+  SynthesisWorkflowStep,
+  SynthesisWorkflowLink,
+  SynthesisSubgraph,
+} from './mermaid-generator';
 import { toNormalizedSchemas } from '@/lib/ai/prompts/synthesis/match-template';
 import { synthesisOutputSchema } from '@/lib/schema/synthesis';
 import { classificationResultSchema } from '@/lib/schema/synthesis';
@@ -148,6 +153,7 @@ export async function runSynthesisPipeline(
         classificationResult = checkpointValidation.data;
         console.log(`[synthesis] Stage 4 (Classify): resumed from checkpoint`);
       } else {
+        const classifyStart = Date.now();
         classificationResult = await classifyDivergences({
           projectId,
           processNodeId: nodeId,
@@ -155,6 +161,10 @@ export async function runSynthesisPipeline(
           matchResults,
           individualSchemas: enrichedSchemas,
         });
+        const classifyDuration = Date.now() - classifyStart;
+        console.log(
+          `[synthesis] Stage 4 (Classify): ${classifyDuration}ms (re-run after invalid checkpoint)`,
+        );
       }
     } else {
       const classifyStart = Date.now();
@@ -203,11 +213,10 @@ export async function runSynthesisPipeline(
       interviewCount: capturedInterviews.length,
     });
 
-    // Generate Mermaid diagram and persist
+    // Transform synthesis output into workflow JSON for Mermaid rendering
     try {
-      const mermaidDefinition = generateSynthesisMermaid(
-        synthesisOutput as unknown as SynthesisWorkflowJson,
-      );
+      const workflowJson = transformToWorkflowJson(matchResults, narrationResult.divergences);
+      const mermaidDefinition = generateSynthesisMermaid(workflowJson);
       await updateSynthesisResultMermaid(result.id, mermaidDefinition);
     } catch (mermaidError) {
       // Mermaid generation failure is non-fatal — log and continue
@@ -226,9 +235,118 @@ export async function runSynthesisPipeline(
     if (error instanceof SynthesisError) {
       throw error;
     }
+    // Preserve error codes from sub-module errors
+    if (
+      error instanceof SynthesisCorrelationError ||
+      error instanceof SynthesisClassificationError ||
+      error instanceof SynthesisNarrationError
+    ) {
+      throw new SynthesisError(error.message, error.code);
+    }
     const message = error instanceof Error ? error.message : 'Unknown error';
     throw new SynthesisError(`Synthesis pipeline failed: ${message}`, 'SYNTHESIS_FAILED');
   }
+}
+
+/**
+ * Transform MatchResult[] into SynthesisWorkflowJson for Mermaid rendering.
+ * Each match result becomes one or more workflow steps with links derived
+ * from sequential ordering. Subsumption matches produce subgraphs.
+ */
+export function transformToWorkflowJson(
+  matchResults: MatchResult[],
+  divergenceAnnotations: Array<{
+    id: string;
+    stepId: string;
+    divergenceType: string;
+    intervieweeIds: string[];
+    confidence: number;
+    explanation: string;
+    sourceType: string;
+  }>,
+): SynthesisWorkflowJson {
+  const steps: SynthesisWorkflowStep[] = [];
+  const links: SynthesisWorkflowLink[] = [];
+  const subgraphs: SynthesisSubgraph[] = [];
+  const seenStepIds = new Set<string>();
+
+  for (const match of matchResults) {
+    if (match.matchType === 'subsumption' && match.sourceSteps.length >= 2) {
+      // First source step is the parent; rest are subsumed
+      const parentStep = match.sourceSteps[0];
+      const parentId = `step_${parentStep.stepId.replace(/-/g, '').slice(0, 8)}`;
+      if (!seenStepIds.has(parentId)) {
+        steps.push({
+          id: parentId,
+          label: parentStep.stepLabel,
+          type: 'step',
+          sourceInterviewIds: [parentStep.interviewId],
+        });
+        seenStepIds.add(parentId);
+      }
+
+      const subStepIds: string[] = [];
+      for (let i = 1; i < match.sourceSteps.length; i++) {
+        const sub = match.sourceSteps[i];
+        const subId = `step_${sub.stepId.replace(/-/g, '').slice(0, 8)}`;
+        if (!seenStepIds.has(subId)) {
+          steps.push({
+            id: subId,
+            label: sub.stepLabel,
+            type: 'step',
+            sourceInterviewIds: [sub.interviewId],
+          });
+          seenStepIds.add(subId);
+        }
+        subStepIds.push(subId);
+      }
+
+      subgraphs.push({
+        id: `sg_${parentId}`,
+        label: parentStep.stepLabel,
+        stepIds: [parentId, ...subStepIds],
+      });
+    } else {
+      // exact_match, semantic_match, split_merge, unmatched — each source step is a node
+      for (const src of match.sourceSteps) {
+        const stepId = `step_${src.stepId.replace(/-/g, '').slice(0, 8)}`;
+        if (!seenStepIds.has(stepId)) {
+          steps.push({
+            id: stepId,
+            label: src.stepLabel,
+            type: 'step',
+            sourceInterviewIds: [src.interviewId],
+          });
+          seenStepIds.add(stepId);
+        }
+      }
+    }
+  }
+
+  // Build sequential links between steps (in order they were added)
+  for (let i = 0; i < steps.length - 1; i++) {
+    links.push({ from: steps[i].id, to: steps[i + 1].id });
+  }
+
+  // Remap divergence annotations to use the generated step IDs
+  const remappedDivergences = divergenceAnnotations.map((div) => ({
+    ...div,
+    stepId: `step_${div.stepId.replace(/-/g, '').slice(0, 8)}`,
+  }));
+
+  // Filter to only divergences whose stepId matches an actual step
+  const validStepIds = new Set(steps.map((s) => s.id));
+  const filteredDivergences = remappedDivergences.filter((d) => validStepIds.has(d.stepId));
+
+  return {
+    steps,
+    links,
+    divergenceAnnotations:
+      filteredDivergences.length > 0
+        ? (filteredDivergences as SynthesisWorkflowJson['divergenceAnnotations'])
+        : undefined,
+    subgraphs: subgraphs.length > 0 ? subgraphs : undefined,
+  };
 }
 
 export class SynthesisError extends Error {

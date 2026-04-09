@@ -339,3 +339,9 @@ Claude Opus 4.6 (1M context)
 - `src/lib/synthesis/engine.test.ts` — MODIFIED: Updated tests for real Stage 4/5 integration
 - `src/lib/synthesis/correlator.test.ts` — MODIFIED: Fixed vitest environment directive
 - `src/app/api/synthesis/[nodeId]/route.test.ts` — MODIFIED: Fixed vitest environment directive
+
+### Review Findings (Epic 4 Review — 2026-04-09)
+
+- [x] [Review][Patch] #1 Unhandled JSON.parse in divergence.ts and narrator.ts [divergence.ts:69, narrator.ts:70] — first-attempt JSON.parse is outside try/catch. Malformed LLM response throws unhandled SyntaxError bypassing retry logic. correlator.ts correctly wraps this.
+- [x] [Review][Patch] #2 Stage 4 resume path does not log duration when re-running after invalid checkpoint [engine.ts:151-157] — no `classifyStart = Date.now()` wrapper unlike the fresh-run path at engine.ts:160-169.
+- [x] [Review][Patch] #3 ClassifyInput type missing intervieweeRole field [divergence.ts:17-22] — engine.ts passes enrichedSchemas with intervieweeRole, but ClassifyInput silently drops it. Role info lost during classification.

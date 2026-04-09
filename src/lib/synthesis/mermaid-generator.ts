@@ -37,16 +37,6 @@ export function generateSynthesisMermaid(workflow: SynthesisWorkflowJson): strin
     }
   }
 
-  // Build subgraph lookup
-  const stepToSubgraph = new Map<string, string>();
-  if (workflow.subgraphs) {
-    for (const sg of workflow.subgraphs) {
-      for (const stepId of sg.stepIds) {
-        stepToSubgraph.set(stepId, sg.id);
-      }
-    }
-  }
-
   // Collect steps inside subgraphs
   const subgraphSteps = new Set<string>();
   if (workflow.subgraphs) {

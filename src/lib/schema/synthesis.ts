@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { matchResultArraySchema } from './workflow';
 
 // --- Divergence Types ---
 
@@ -62,9 +63,9 @@ export type NarrationResult = z.infer<typeof narrationResultSchema>;
 // --- Synthesis Output (Final Assembled Result) ---
 
 export const synthesisOutputSchema = z.object({
-  normalizedWorkflow: z.unknown(),
+  normalizedWorkflow: matchResultArraySchema,
   divergenceAnnotations: z.array(divergenceAnnotationSchema),
-  matchMetadata: z.unknown(),
+  matchMetadata: matchResultArraySchema,
   narrativeSummary: z.string(),
   interviewCount: z.number().int().min(2),
   sourceInterviewIds: z.array(z.string()),

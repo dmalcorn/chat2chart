@@ -13,17 +13,29 @@ vi.mock('@/lib/db/queries', () => ({
   updateSynthesisResultMermaid: vi.fn(),
 }));
 
-vi.mock('./correlator', () => ({
-  correlateSteps: vi.fn(),
-}));
+vi.mock('./correlator', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./correlator')>();
+  return {
+    ...actual,
+    correlateSteps: vi.fn(),
+  };
+});
 
-vi.mock('./divergence', () => ({
-  classifyDivergences: vi.fn(),
-}));
+vi.mock('./divergence', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./divergence')>();
+  return {
+    ...actual,
+    classifyDivergences: vi.fn(),
+  };
+});
 
-vi.mock('./narrator', () => ({
-  narrateDivergences: vi.fn(),
-}));
+vi.mock('./narrator', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./narrator')>();
+  return {
+    ...actual,
+    narrateDivergences: vi.fn(),
+  };
+});
 
 vi.mock('./mermaid-generator', () => ({
   generateSynthesisMermaid: vi.fn().mockReturnValue('flowchart TD\n  step1(["Test"])'),

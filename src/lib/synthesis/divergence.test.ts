@@ -75,6 +75,7 @@ function makeClassifyInput() {
       {
         interviewId: randomUUID(),
         intervieweeName: 'Alice',
+        intervieweeRole: null,
         schemaJson: {
           schemaVersion: '1.0',
           processNodeId: randomUUID(),
