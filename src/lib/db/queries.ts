@@ -5,7 +5,6 @@ import {
   interviewExchanges,
   interviewTokens,
   processNodes,
-  projectSupervisors,
   projects,
   synthesisResults,
   users,
@@ -93,19 +92,19 @@ export async function createUser(data: {
 }
 
 export async function isEmailInSupervisorAllowlist(email: string): Promise<boolean> {
-  const result = await db.query.projectSupervisors.findFirst({
-    where: eq(projectSupervisors.userId, email),
-    with: { user: true },
-  });
-  // Check if user exists as supervisor in any project
-  if (result) return true;
-
-  // Also check via user email directly in project_supervisors join
   const user = await db.query.users.findFirst({
     where: eq(users.email, email),
     with: { projectSupervisors: true },
   });
-  return (user?.projectSupervisors?.length ?? 0) > 0;
+  if (!user) return false;
+  return (user.projectSupervisors?.length ?? 0) > 0;
+}
+
+export async function getSkillProviderByProjectAndSkill(projectId: string, skillName: string) {
+  const result = await db.query.projectSkillProviders.findFirst({
+    where: (table, { and }) => and(eq(table.projectId, projectId), eq(table.skillName, skillName)),
+  });
+  return result ?? null;
 }
 
 export async function getSynthesisResultByNodeId(nodeId: string) {

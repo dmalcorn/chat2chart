@@ -25,3 +25,13 @@
 - Module-level side effect in `connection.ts` — `postgres()` client created at import time; crashes if `DATABASE_URL` unset. Story 1.3 env validation will gate this.
 - No connection pool lifecycle management — no `.end()` exported, no pool config. Acceptable for MVP dev; revisit for production deployment.
 - `interviewExchanges` missing DB constraint for one-verified-per-segment rule — Architecture requires exactly one `is_verified = true` per segment. Will be enforced at service level in a future story.
+
+## Deferred from: code review of 1-3-environment-validation-and-auth-infrastructure (2026-04-08)
+
+- No rate limiting on login endpoint — brute-force protection needed before production
+- No JWT server-side revocation — tokens remain valid for 24h even if user is deactivated
+- `FIRST_SUPERVISOR_PASSWORD` remains in process.env after bootstrap — Node.js limitation, plaintext persists in memory
+- Bootstrap race condition on concurrent startup — check-then-insert without conflict handling; MVP runs single instance
+- `parseCookies` doesn't URL-decode cookie values — JWTs use base64url so no impact currently
+- `DATABASE_URL` rejects `postgres://` scheme alias — Railway uses `postgresql://`, but some providers emit `postgres://`
+- SESSION_SECRET used directly as HMAC key without HKDF derivation — acceptable for MVP demo
