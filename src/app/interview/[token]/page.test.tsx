@@ -85,7 +85,7 @@ const mockProcessNode = {
   updatedAt: new Date(),
 };
 
-function makeInterview(status: string) {
+function makeInterview(status: 'pending' | 'active' | 'completed' | 'validating' | 'captured') {
   return {
     id: 'interview-id',
     tokenId: 'token-row-id',
@@ -188,7 +188,7 @@ describe('InterviewPage', () => {
   it('renders invalid token screen for unexpected interview status', async () => {
     vi.mocked(validateTokenFormat).mockReturnValue(true);
     vi.mocked(getInterviewTokenByToken).mockResolvedValue(mockTokenRow);
-    vi.mocked(getInterviewByTokenId).mockResolvedValue(makeInterview('unknown_status'));
+    vi.mocked(getInterviewByTokenId).mockResolvedValue(makeInterview('unknown_status' as 'active'));
     vi.mocked(getProjectById).mockResolvedValue(mockProject);
     vi.mocked(getProcessNodeById).mockResolvedValue(mockProcessNode);
 
