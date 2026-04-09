@@ -1,6 +1,6 @@
 # Story 3.7: Diagram Correction Flow & Read-Only Completed View
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -20,93 +20,93 @@ So that my process is accurately captured and I can revisit it.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the correction prompt template `src/lib/ai/prompts/correction-template.ts` (AC: #2)
-  - [ ] 1.1 Export a `buildCorrectionPrompt(currentSchema: object, errorDescription: string): string` function that constructs the system prompt for the diagram correction agent
-  - [ ] 1.2 The prompt must instruct the LLM to: receive the current individual process schema + the interviewee's error description, produce a corrected schema in the same Process Schema JSON format, preserve all elements the interviewee did NOT flag as incorrect, apply corrections only to what was described as wrong
-  - [ ] 1.3 The prompt tone must be collaborative — framing corrections as refinements, not failures. Use language like "Let me adjust that for you" not "Error detected"
-  - [ ] 1.4 The prompt must instruct the LLM to return structured JSON output matching the Process Schema Zod schema from `@/lib/schema/workflow.ts`
+- [x] Task 1: Create the correction prompt template `src/lib/ai/prompts/correction-template.ts` (AC: #2)
+  - [x] 1.1 Export a `buildCorrectionPrompt(currentSchema: object, errorDescription: string): string` function that constructs the system prompt for the diagram correction agent
+  - [x] 1.2 The prompt must instruct the LLM to: receive the current individual process schema + the interviewee's error description, produce a corrected schema in the same Process Schema JSON format, preserve all elements the interviewee did NOT flag as incorrect, apply corrections only to what was described as wrong
+  - [x] 1.3 The prompt tone must be collaborative — framing corrections as refinements, not failures. Use language like "Let me adjust that for you" not "Error detected"
+  - [x] 1.4 The prompt must instruct the LLM to return structured JSON output matching the Process Schema Zod schema from `@/lib/schema/workflow.ts`
 
-- [ ] Task 2: Create the correction agent orchestrator `src/lib/interview/correction-agent.ts` (AC: #2, #3)
-  - [ ] 2.1 Export an async generator function `streamCorrectedSchema(params: { currentSchema: object, errorDescription: string, projectId: string }): AsyncIterable<string>` that orchestrates the correction session
-  - [ ] 2.2 Import `buildCorrectionPrompt` from `@/lib/ai/prompts/correction-template`
-  - [ ] 2.3 Resolve the LLM provider via `resolveProvider` from `@/lib/ai/provider-registry` using the project ID and `'diagram_correction'` skill name
-  - [ ] 2.4 Call `provider.streamResponse()` with the assembled correction prompt and the error description as the user message
-  - [ ] 2.5 Yield streamed tokens from the provider
-  - [ ] 2.6 After streaming completes, parse the accumulated response as JSON, validate against the Process Schema Zod schema
-  - [ ] 2.7 If Zod validation fails, retry once with a clarifying prompt asking the LLM to fix the JSON structure — if retry also fails, throw an error with code `CORRECTION_VALIDATION_FAILED`
+- [x] Task 2: Create the correction agent orchestrator `src/lib/interview/correction-agent.ts` (AC: #2, #3)
+  - [x] 2.1 Export an async generator function `streamCorrectedSchema(params: { currentSchema: object, errorDescription: string, projectId: string }): AsyncIterable<string>` that orchestrates the correction session
+  - [x] 2.2 Import `buildCorrectionPrompt` from `@/lib/ai/prompts/correction-template`
+  - [x] 2.3 Resolve the LLM provider via `resolveProvider` from `@/lib/ai/provider-registry` using the project ID and `'diagram_correction'` skill name
+  - [x] 2.4 Call `provider.streamResponse()` with the assembled correction prompt and the error description as the user message
+  - [x] 2.5 Yield streamed tokens from the provider
+  - [x] 2.6 After streaming completes, parse the accumulated response as JSON, validate against the Process Schema Zod schema
+  - [x] 2.7 If Zod validation fails, retry once with a clarifying prompt asking the LLM to fix the JSON structure — if retry also fails, throw an error with code `CORRECTION_VALIDATION_FAILED`
 
-- [ ] Task 3: Create `POST /api/interview/[token]/schema/correct` route handler (AC: #1, #3, #4)
-  - [ ] 3.1 Create `src/app/api/interview/[token]/schema/correct/route.ts` (directory already exists with `.gitkeep`)
-  - [ ] 3.2 Extract `token` from route params: `{ params }: { params: Promise<{ token: string }> }` (Next.js 16 async params)
-  - [ ] 3.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404 with `INVALID_TOKEN`
-  - [ ] 3.4 Look up token via `getInterviewTokenByToken(token)` from `@/lib/db/queries` — if not found, return 404
-  - [ ] 3.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if not found or status is not `validating`, return 400 with `{ error: { message: "Interview is not in a state that allows corrections", code: "INVALID_STATE" } }`
-  - [ ] 3.6 Parse request body with Zod: `{ errorDescription: string, currentSchema: object }` — return 400 with `VALIDATION_ERROR` on failure
-  - [ ] 3.7 Call `streamCorrectedSchema()` from `@/lib/interview/correction-agent` with the current schema, error description, and project ID from the token
-  - [ ] 3.8 Stream the response as SSE using the standardized event format:
+- [x] Task 3: Create `POST /api/interview/[token]/schema/correct` route handler (AC: #1, #3, #4)
+  - [x] 3.1 Create `src/app/api/interview/[token]/schema/correct/route.ts` (directory already exists with `.gitkeep`)
+  - [x] 3.2 Extract `token` from route params: `{ params }: { params: Promise<{ token: string }> }` (Next.js 16 async params)
+  - [x] 3.3 Validate token format using `validateTokenFormat()` from `@/lib/interview/token` — if invalid, return 404 with `INVALID_TOKEN`
+  - [x] 3.4 Look up token via `getInterviewTokenByToken(token)` from `@/lib/db/queries` — if not found, return 404
+  - [x] 3.5 Look up interview via `getInterviewByTokenId(tokenRow.id)` — if not found or status is not `validating`, return 400 with `{ error: { message: "Interview is not in a state that allows corrections", code: "INVALID_STATE" } }`
+  - [x] 3.6 Parse request body with Zod: `{ errorDescription: string, currentSchema: object }` — return 400 with `VALIDATION_ERROR` on failure
+  - [x] 3.7 Call `streamCorrectedSchema()` from `@/lib/interview/correction-agent` with the current schema, error description, and project ID from the token
+  - [x] 3.8 Stream the response as SSE using the standardized event format:
     - `event: message` with `data: { content: token, exchangeType: 'correction' }` for each streamed token
     - `event: schema` with `data: { schema: correctedSchemaJson, mermaidDefinition: regeneratedMermaid }` when correction completes — this carries the validated corrected schema AND the regenerated Mermaid definition
     - `event: done` with `data: {}` on completion
     - `event: error` with `data: { message, code }` on failure
-  - [ ] 3.9 After the corrected schema passes Zod validation, regenerate the Mermaid diagram using `generateIndividualMermaid()` from `@/lib/interview/individual-mermaid-generator` (this function must exist from Story 3.6)
-  - [ ] 3.10 Update the `individual_process_schemas` row with the corrected `schemaJson` and `mermaidDefinition` — set `validationStatus` to `'pending'` (awaiting re-confirmation)
-  - [ ] 3.11 Wrap in try/catch — on unexpected errors, emit SSE error event with `{ message: "The AI agent is temporarily unavailable. Please try again.", code: "LLM_ERROR" }`
+  - [x] 3.9 After the corrected schema passes Zod validation, regenerate the Mermaid diagram using `generateIndividualMermaid()` from `@/lib/interview/individual-mermaid-generator` (this function must exist from Story 3.6)
+  - [x] 3.10 Update the `individual_process_schemas` row with the corrected `schemaJson` and `mermaidDefinition` — set `validationStatus` to `'pending'` (awaiting re-confirmation)
+  - [x] 3.11 Wrap in try/catch — on unexpected errors, emit SSE error event with `{ message: "The AI agent is temporarily unavailable. Please try again.", code: "LLM_ERROR" }`
 
-- [ ] Task 4: Add database query functions to `src/lib/db/queries.ts` (AC: #3, #5)
-  - [ ] 4.1 Add `getIndividualProcessSchemaByInterviewId(interviewId: string)` — queries `individualProcessSchemas` table by `interviewId`, returns row or null
-  - [ ] 4.2 Add `updateIndividualProcessSchema(schemaId: string, data: { schemaJson: object, mermaidDefinition: string, validationStatus: string })` — updates the schema row and returns updated row
-  - [ ] 4.3 Add `getVerifiedExchangesByInterviewId(interviewId: string)` — queries `interviewExchanges` where `interviewId` matches AND `isVerified = true`, ordered by `sequenceNumber` ascending — returns the confirmed reflective summaries for the read-only view
+- [x] Task 4: Add database query functions to `src/lib/db/queries.ts` (AC: #3, #5)
+  - [x] 4.1 Add `getIndividualProcessSchemaByInterviewId(interviewId: string)` — queries `individualProcessSchemas` table by `interviewId`, returns row or null
+  - [x] 4.2 Add `updateIndividualProcessSchema(schemaId: string, data: { schemaJson: object, mermaidDefinition: string, validationStatus: string })` — updates the schema row and returns updated row
+  - [x] 4.3 Add `getVerifiedExchangesByInterviewId(interviewId: string)` — queries `interviewExchanges` where `interviewId` matches AND `isVerified = true`, ordered by `sequenceNumber` ascending — returns the confirmed reflective summaries for the read-only view
 
-- [ ] Task 5: Create the `ReadOnlyView` component `src/components/interview/read-only-view.tsx` (AC: #5, #6, #7)
-  - [ ] 5.1 Create a Client Component (`"use client"`) that receives props: `intervieweeName: string`, `processNodeName: string`, `verifiedSummaries: Array<{ id: string, content: string, sequenceNumber: number }>`, `mermaidDefinition: string`, `diagramTextAlternative: string`
-  - [ ] 5.2 Render a heading: "Your Process: {processNodeName}" with the interviewee's name
-  - [ ] 5.3 Render each verified reflective summary as a violet card (same styling as `ReflectiveSummaryCard` in confirmed state) with a green checkmark badge and "Confirmed" text — these are read-only, no buttons
-  - [ ] 5.4 Render the validated personal diagram using `DiagramCanvas` component (dynamic import of Mermaid.js, no SSR) — max-width 700px, read-only variant (shadow-sm, no confirm/correct buttons)
-  - [ ] 5.5 Include `<details><summary>Text description of your process</summary>` with a structured text alternative listing steps, decisions, and connections
-  - [ ] 5.6 Display a warm completion message: "Thank you for sharing your expertise. Your process has been captured and will help inform how your team's work is understood." — styled with `--success` color accent, centered, generous padding (32px top)
-  - [ ] 5.7 No interactive elements — no buttons, no recording controls, no correction options
-  - [ ] 5.8 Accessible: semantic heading hierarchy, `aria-label` on the summary list section, `aria-live` not needed (static content)
+- [x] Task 5: Create the `ReadOnlyView` component `src/components/interview/read-only-view.tsx` (AC: #5, #6, #7)
+  - [x] 5.1 Create a Client Component (`"use client"`) that receives props: `intervieweeName: string`, `processNodeName: string`, `verifiedSummaries: Array<{ id: string, content: string, sequenceNumber: number }>`, `mermaidDefinition: string`, `diagramTextAlternative: string`
+  - [x] 5.2 Render a heading: "Your Process: {processNodeName}" with the interviewee's name
+  - [x] 5.3 Render each verified reflective summary as a violet card (same styling as `ReflectiveSummaryCard` in confirmed state) with a green checkmark badge and "Confirmed" text — these are read-only, no buttons
+  - [x] 5.4 Render the validated personal diagram using `DiagramCanvas` component (dynamic import of Mermaid.js, no SSR) — max-width 700px, read-only variant (shadow-sm, no confirm/correct buttons)
+  - [x] 5.5 Include `<details><summary>Text description of your process</summary>` with a structured text alternative listing steps, decisions, and connections
+  - [x] 5.6 Display a warm completion message: "Thank you for sharing your expertise. Your process has been captured and will help inform how your team's work is understood." — styled with `--success` color accent, centered, generous padding (32px top)
+  - [x] 5.7 No interactive elements — no buttons, no recording controls, no correction options
+  - [x] 5.8 Accessible: semantic heading hierarchy, `aria-label` on the summary list section, `aria-live` not needed (static content)
 
-- [ ] Task 6: Create the `CorrectionPanel` component `src/components/interview/correction-panel.tsx` (AC: #1, #4)
-  - [ ] 6.1 Create a Client Component (`"use client"`) that receives props: `token: string`, `currentSchema: object`, `onCorrectionComplete: (correctedSchema: object, mermaidDefinition: string) => void`, `onCancel: () => void`
-  - [ ] 6.2 Render a text input area (textarea, not voice — correction is text-based in this flow) with placeholder: "Tell me what's not right about the diagram..."
-  - [ ] 6.3 Render a "Submit Correction" button (primary) and a "Cancel" link (ghost) that calls `onCancel`
-  - [ ] 6.4 On submit, POST to `/api/interview/${token}/schema/correct` with `{ errorDescription, currentSchema }` and consume the SSE stream
-  - [ ] 6.5 Display a streaming status indicator: "Updating your diagram..." with a pulsing animation while the correction streams
-  - [ ] 6.6 On `event: schema`, call `onCorrectionComplete` with the corrected schema and Mermaid definition — the parent component handles re-rendering the diagram for re-validation
-  - [ ] 6.7 On `event: error`, display the error message inline (not a modal) with collaborative tone: "I wasn't able to make that change. Could you try describing it differently?"
-  - [ ] 6.8 The correction panel replaces the confirm/correct buttons area below the diagram — it does not appear as a modal or overlay
+- [x] Task 6: Create the `CorrectionPanel` component `src/components/interview/correction-panel.tsx` (AC: #1, #4)
+  - [x] 6.1 Create a Client Component (`"use client"`) that receives props: `token: string`, `currentSchema: object`, `onCorrectionComplete: (correctedSchema: object, mermaidDefinition: string) => void`, `onCancel: () => void`
+  - [x] 6.2 Render a text input area (textarea, not voice — correction is text-based in this flow) with placeholder: "Tell me what's not right about the diagram..."
+  - [x] 6.3 Render a "Submit Correction" button (primary) and a "Cancel" link (ghost) that calls `onCancel`
+  - [x] 6.4 On submit, POST to `/api/interview/${token}/schema/correct` with `{ errorDescription, currentSchema }` and consume the SSE stream
+  - [x] 6.5 Display a streaming status indicator: "Updating your diagram..." with a pulsing animation while the correction streams
+  - [x] 6.6 On `event: schema`, call `onCorrectionComplete` with the corrected schema and Mermaid definition — the parent component handles re-rendering the diagram for re-validation
+  - [x] 6.7 On `event: error`, display the error message inline (not a modal) with collaborative tone: "I wasn't able to make that change. Could you try describing it differently?"
+  - [x] 6.8 The correction panel replaces the confirm/correct buttons area below the diagram — it does not appear as a modal or overlay
 
-- [ ] Task 7: Create Zod schema for correction request `src/lib/schema/api-requests.ts` (AC: #1)
-  - [ ] 7.1 Add `correctionRequestSchema` to the existing `api-requests.ts` file: `z.object({ errorDescription: z.string().min(1).max(1000), currentSchema: z.object({}).passthrough() })`
-  - [ ] 7.2 Export `CorrectionRequest` type inferred from the schema
+- [x] Task 7: Create Zod schema for correction request `src/lib/schema/api-requests.ts` (AC: #1)
+  - [x] 7.1 Add `correctionRequestSchema` to the existing `api-requests.ts` file: `z.object({ errorDescription: z.string().min(1).max(1000), currentSchema: z.object({}).passthrough() })`
+  - [x] 7.2 Export `CorrectionRequest` type inferred from the schema
 
-- [ ] Task 8: Create tests (AC: #1-#7)
-  - [ ] 8.1 Create `src/lib/ai/prompts/correction-template.test.ts`:
+- [x] Task 8: Create tests (AC: #1-#7)
+  - [x] 8.1 Create `src/lib/ai/prompts/correction-template.test.ts`:
     - Test `buildCorrectionPrompt` returns a string containing the schema and error description
     - Test the prompt contains collaborative language (no "error", "failed", "wrong")
     - Test the prompt instructs JSON output matching Process Schema format
-  - [ ] 8.2 Create `src/lib/interview/correction-agent.test.ts`:
+  - [x] 8.2 Create `src/lib/interview/correction-agent.test.ts`:
     - Test `streamCorrectedSchema` calls provider with assembled prompt
     - Test successful correction yields streamed tokens
     - Test Zod validation failure triggers one retry
     - Test retry failure throws with `CORRECTION_VALIDATION_FAILED` code
     - Mock `LLMProvider` interface — NOT `@anthropic-ai/sdk` directly
     - Mock `resolveProvider` from `@/lib/ai/provider-registry`
-  - [ ] 8.3 Create `src/app/api/interview/[token]/schema/correct/route.test.ts`:
+  - [x] 8.3 Create `src/app/api/interview/[token]/schema/correct/route.test.ts`:
     - Test valid correction request returns SSE stream with `message`, `schema`, and `done` events
     - Test invalid token returns 404 with `INVALID_TOKEN`
     - Test interview not in `validating` state returns 400 with `INVALID_STATE`
     - Test invalid request body returns 400 with `VALIDATION_ERROR`
     - Test LLM error emits SSE error event with `LLM_ERROR`
     - Mock `@/lib/db/queries` functions and `@/lib/interview/correction-agent`
-  - [ ] 8.4 Create `src/components/interview/read-only-view.test.tsx`:
+  - [x] 8.4 Create `src/components/interview/read-only-view.test.tsx`:
     - Test renders interviewee name and process node name
     - Test renders all verified summaries with green checkmark badges
     - Test renders Mermaid diagram canvas (mock the dynamic import)
     - Test renders "Thank you for sharing your expertise" message
     - Test no interactive buttons are present
-  - [ ] 8.5 Create `src/components/interview/correction-panel.test.tsx`:
+  - [x] 8.5 Create `src/components/interview/correction-panel.test.tsx`:
     - Test renders textarea and submit button
     - Test submit sends POST with error description and current schema
     - Test streaming status indicator appears during correction
@@ -294,9 +294,31 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+N/A — all tests pass.
 
 ### Completion Notes List
+- Correction prompt template uses collaborative tone ("refinement", "adjust") — no adversarial language
+- Correction agent orchestrator supports both streaming (`streamCorrectedSchema`) and single-turn (`getCorrectedSchema`) modes
+- Retry logic: one retry with clarifying prompt on Zod validation failure, try/catch wraps JSON.parse for graceful fallback
+- POST /api/interview/[token]/schema/correct streams SSE with `message`, `schema`, `done`, and `error` events
+- ReadOnlyView renders confirmed summaries with green checkmark badges in violet card styling matching ReflectiveSummaryCard
+- CorrectionPanel provides text input (not voice) with streaming status indicator and inline error display
+- Correction request validated via Zod: `errorDescription` (1-1000 chars) + `currentSchema` (passthrough object)
+- DB query functions reused from Story 3.6 — `getIndividualProcessSchemaByInterviewId`, `updateIndividualProcessSchema`, `getVerifiedExchangesByInterviewId`
+- All service boundaries enforced: LLM calls via provider registry, Drizzle only in queries, no localStorage/sessionStorage
 
 ### File List
+- `src/lib/ai/prompts/correction-template.ts` (created)
+- `src/lib/ai/prompts/correction-template.test.ts` (created)
+- `src/lib/interview/correction-agent.ts` (created)
+- `src/lib/interview/correction-agent.test.ts` (created)
+- `src/app/api/interview/[token]/schema/correct/route.ts` (created)
+- `src/app/api/interview/[token]/schema/correct/route.test.ts` (created)
+- `src/components/interview/read-only-view.tsx` (created)
+- `src/components/interview/read-only-view.test.tsx` (created)
+- `src/components/interview/correction-panel.tsx` (created)
+- `src/components/interview/correction-panel.test.tsx` (created)
+- `src/lib/schema/api-requests.ts` (modified — added `correctionRequestSchema`)
