@@ -156,11 +156,11 @@ describe('MicBar', () => {
       expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
     });
 
-    it('is hidden during text mode even when canComplete is true', () => {
+    it('is visible during text mode when canComplete is true', () => {
       render(
         <MicBar {...defaultProps} mode="text" canComplete={true} onCompleteInterview={vi.fn()} />,
       );
-      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+      expect(screen.getByText("I'm finished describing my process")).toBeInTheDocument();
     });
 
     it('clicking completion button calls onCompleteInterview', () => {

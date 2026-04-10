@@ -50,24 +50,22 @@ export function ConversationThread({ token }: ConversationThreadProps) {
       } else {
         setCompletionError('Something went wrong completing the interview. Please try again.');
         setIsCompleting(false);
-        completionTriggeredRef.current = false;
       }
     } catch {
       setCompletionError('Something went wrong completing the interview. Please try again.');
       setIsCompleting(false);
-      completionTriggeredRef.current = false;
     }
   }, [completeInterview, isCompleting]);
 
   handleCompleteRef.current = handleComplete;
 
-  // Auto-trigger completion when agent suggests it
+  // Auto-trigger completion when agent suggests it (runs once per suggestion)
   useEffect(() => {
-    if (completionSuggested && !completionTriggeredRef.current && !isCompleting) {
+    if (completionSuggested && !completionTriggeredRef.current) {
       completionTriggeredRef.current = true;
       handleCompleteRef.current?.();
     }
-  }, [completionSuggested, isCompleting]);
+  }, [completionSuggested]);
 
   const { status: sttStatus, startRecording, stopRecording, isSupported } = useSpeechRecognition();
 

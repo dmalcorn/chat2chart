@@ -172,6 +172,29 @@ export function MicBar({
             Back to voice
           </button>
         </div>
+        {canComplete && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={onCompleteInterview}
+              disabled={isCompleting}
+              aria-label={
+                isCompleting
+                  ? 'Generating your process diagram...'
+                  : 'End interview and generate process diagram'
+              }
+              aria-busy={isCompleting || undefined}
+              className="w-full rounded-lg px-4 py-2 text-sm font-medium outline-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
+              style={{
+                color: 'var(--primary)',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {isCompleting ? 'Wrapping up...' : "I'm finished describing my process"}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
