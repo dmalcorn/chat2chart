@@ -43,10 +43,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = parsed.data;
+    console.log(`Login attempt: ${email}`);
 
     // Check if email is on any allowlist
     const onEnvAllowlist = isOnEnvAllowlist(email);
     const onDbAllowlist = await isEmailInSupervisorAllowlist(email);
+    console.log(`Allowlist check: env=${onEnvAllowlist}, db=${onDbAllowlist}`);
 
     if (!onEnvAllowlist && !onDbAllowlist) {
       return NextResponse.json(
@@ -62,6 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Verify credentials
     const user = await getUserByEmail(email);
+    console.log(`User lookup: found=${!!user}, role=${user?.role}`);
     if (!user) {
       // Don't reveal whether email exists
       return NextResponse.json(
@@ -76,6 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordValid = await verifyPassword(password, user.passwordHash);
+    console.log(`Password check: valid=${passwordValid}`);
     if (!passwordValid) {
       return NextResponse.json(
         {
@@ -99,7 +103,8 @@ export async function POST(request: NextRequest) {
 
     setSessionCookie(response, token);
     return response;
-  } catch {
+  } catch (err) {
+    console.error('Login error:', err);
     return NextResponse.json(
       { error: { message: 'Internal server error', code: 'INTERNAL_ERROR' } },
       { status: 500 },
