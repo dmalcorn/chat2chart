@@ -3,12 +3,15 @@ import { validateSession } from '@/lib/auth/session';
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
+  console.log(`Middleware: ${request.nextUrl.pathname}, cookie=${!!sessionCookie?.value}`);
 
   if (!sessionCookie?.value) {
+    console.log('Middleware: no session cookie, redirecting to login');
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   const session = await validateSession(sessionCookie.value);
+  console.log(`Middleware: session valid=${!!session}, role=${session?.role}`);
 
   if (!session || session.role !== 'supervisor') {
     return NextResponse.redirect(new URL('/auth/login', request.url));
