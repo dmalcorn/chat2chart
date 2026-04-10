@@ -182,11 +182,9 @@ async function seedFoundational() {
       projectId: SEED_PROJECT_ID,
       skillName: 'interview_agent',
       providerName: 'anthropic',
-      modelName: 'claude-sonnet-4-5-20250514',
+      modelName: 'claude-sonnet-4-6',
     });
-    console.log(
-      '✓ Created skill-provider mapping: interview_agent → anthropic/claude-sonnet-4-5-20250514',
-    );
+    console.log('✓ Created skill-provider mapping: interview_agent → anthropic/claude-sonnet-4-6');
   }
 
   // --- Interview Tokens ---

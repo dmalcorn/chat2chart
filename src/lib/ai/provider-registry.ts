@@ -58,7 +58,7 @@ function getApiKeyForProvider(providerName: string): string {
 
 function getDefaultModelForProvider(providerName: string): string {
   if (providerName === 'anthropic') {
-    return 'claude-sonnet-4-20250514';
+    return 'claude-sonnet-4-6';
   }
   throw new ProviderResolutionError(
     `No default model configured for provider: ${providerName}`,

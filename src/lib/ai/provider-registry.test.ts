@@ -50,13 +50,13 @@ describe('Provider Registry', () => {
       projectId: 'proj-1',
       skillName: 'interview_agent',
       providerName: 'anthropic',
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: 'claude-sonnet-4-6',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     const provider = await resolveProvider('proj-1', 'interview_agent');
-    expect(provider.metadata.modelName).toBe('claude-sonnet-4-20250514');
+    expect(provider.metadata.modelName).toBe('claude-sonnet-4-6');
     expect(mockGetSkillProvider).toHaveBeenCalledWith('proj-1', 'interview_agent');
   });
 
@@ -122,12 +122,12 @@ describe('Provider Registry', () => {
       projectId: 'proj-1',
       skillName: 'interview_agent',
       providerName: 'anthropic',
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: 'claude-sonnet-4-6',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     const provider = await resolveProvider('proj-1', 'interview_agent');
-    expect(provider.metadata.modelName).toBe('claude-sonnet-4-20250514');
+    expect(provider.metadata.modelName).toBe('claude-sonnet-4-6');
   });
 });

@@ -46,14 +46,14 @@ describe('Claude Provider', () => {
     vi.resetAllMocks();
     provider = createClaudeProvider({
       apiKey: 'sk-ant-test-key',
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
     });
   });
 
   describe('metadata', () => {
     it('has correct provider name and model', () => {
       expect(provider.metadata.providerName).toBe('anthropic');
-      expect(provider.metadata.modelName).toBe('claude-sonnet-4-20250514');
+      expect(provider.metadata.modelName).toBe('claude-sonnet-4-6');
     });
 
     it('has token limits defined', () => {
