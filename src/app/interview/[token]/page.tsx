@@ -10,6 +10,7 @@ import { ViewportCheck } from '@/components/interview/viewport-check';
 import { InterviewFlowController } from '@/components/interview/interview-flow-controller';
 import { ActiveInterviewPlaceholder } from '@/components/interview/active-interview-placeholder';
 import { CompletedViewPlaceholder } from '@/components/interview/completed-view-placeholder';
+import { DiagramReview } from '@/components/interview/diagram-review';
 
 export default async function InterviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -63,7 +64,6 @@ export default async function InterviewPage({ params }: { params: Promise<{ toke
           />
         );
       case 'active':
-      case 'validating':
         return (
           <ActiveInterviewPlaceholder
             intervieweeName={intervieweeName}
@@ -71,7 +71,17 @@ export default async function InterviewPage({ params }: { params: Promise<{ toke
             token={token}
           />
         );
+      case 'validating':
       case 'completed':
+        return interview ? (
+          <DiagramReview token={token} interviewId={interview.id} />
+        ) : (
+          <CompletedViewPlaceholder
+            intervieweeName={intervieweeName}
+            processNodeName={processNodeName}
+            interviewState={interviewState}
+          />
+        );
       case 'captured':
         return (
           <CompletedViewPlaceholder

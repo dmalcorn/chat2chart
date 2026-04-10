@@ -17,6 +17,7 @@ import { resolveProvider } from '@/lib/ai';
 import type { Message } from '@/lib/ai';
 
 const REFLECTIVE_SUMMARY_MARKER = '[REFLECTIVE_SUMMARY]';
+const INTERVIEW_COMPLETE_MARKER = '[INTERVIEW_COMPLETE]';
 const MARKER_BUFFER_LENGTH = REFLECTIVE_SUMMARY_MARKER.length + 5;
 const MAX_SEQUENCE_RETRIES = 3;
 
@@ -249,10 +250,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
             );
           }
 
+          // Check for interview completion marker at end of response
+          const completionSuggested = fullResponse.trimEnd().endsWith(INTERVIEW_COMPLETE_MARKER);
+
+          // Strip completion marker from full response before persistence
+          const responseForPersistence = completionSuggested
+            ? fullResponse.replace(INTERVIEW_COMPLETE_MARKER, '').trimEnd()
+            : fullResponse;
+
           // Determine clean content for persistence
           const { cleanContent } = markerDetected
-            ? detectExchangeType(fullResponse)
-            : { cleanContent: fullResponse };
+            ? detectExchangeType(responseForPersistence)
+            : { cleanContent: responseForPersistence };
 
           // P1: Persist agent response with retry for sequence conflicts
           const agentSequence = userSequence + 1;
@@ -271,6 +280,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
                 interviewExchangeId: agentExchange.id,
                 segmentId,
                 exchangeType,
+                completionSuggested,
               }),
             ),
           );

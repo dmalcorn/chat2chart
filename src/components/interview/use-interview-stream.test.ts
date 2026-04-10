@@ -7,6 +7,8 @@ const initialState: ThreadState = {
   isAutoScrollEnabled: true,
   isAgentTyping: false,
   isProcessingSpeech: false,
+  confirmedCycleCount: 0,
+  completionSuggested: false,
 };
 
 function makeMessage(overrides: Partial<ThreadMessage> = {}): ThreadMessage {
@@ -168,5 +170,59 @@ describe('useInterviewStream SSE integration', () => {
       payload: { segmentId: 'seg-1', summaryState: 'correction_requested' },
     });
     expect(state.messages[0].summaryState).toBe('correction_requested');
+  });
+});
+
+describe('confirmedCycleCount', () => {
+  it('starts at 0', () => {
+    expect(initialState.confirmedCycleCount).toBe(0);
+  });
+
+  it('increments on INCREMENT_CONFIRMED_CYCLES', () => {
+    const state1 = threadReducer(initialState, { type: 'INCREMENT_CONFIRMED_CYCLES' });
+    expect(state1.confirmedCycleCount).toBe(1);
+
+    const state2 = threadReducer(state1, { type: 'INCREMENT_CONFIRMED_CYCLES' });
+    expect(state2.confirmedCycleCount).toBe(2);
+  });
+});
+
+describe('completionSuggested', () => {
+  it('starts at false', () => {
+    expect(initialState.completionSuggested).toBe(false);
+  });
+
+  it('SET_COMPLETION_SUGGESTED sets completion flag', () => {
+    const state = threadReducer(initialState, {
+      type: 'SET_COMPLETION_SUGGESTED',
+      payload: true,
+    });
+    expect(state.completionSuggested).toBe(true);
+  });
+});
+
+describe('STRIP_MARKER', () => {
+  it('removes marker text from message content', () => {
+    const msg = makeMessage({
+      content: 'Thank you for walking me through that![INTERVIEW_COMPLETE]',
+    });
+    const stateWithMsg = { ...initialState, messages: [msg] };
+    const state = threadReducer(stateWithMsg, {
+      type: 'STRIP_MARKER',
+      payload: { id: 'msg-1', marker: '[INTERVIEW_COMPLETE]' },
+    });
+    expect(state.messages[0].content).toBe('Thank you for walking me through that!');
+  });
+
+  it('does not modify messages with a different id', () => {
+    const msg1 = makeMessage({ id: 'msg-1', content: 'Hello[INTERVIEW_COMPLETE]' });
+    const msg2 = makeMessage({ id: 'msg-2', content: 'World[INTERVIEW_COMPLETE]' });
+    const stateWithMsgs = { ...initialState, messages: [msg1, msg2] };
+    const state = threadReducer(stateWithMsgs, {
+      type: 'STRIP_MARKER',
+      payload: { id: 'msg-1', marker: '[INTERVIEW_COMPLETE]' },
+    });
+    expect(state.messages[0].content).toBe('Hello');
+    expect(state.messages[1].content).toBe('World[INTERVIEW_COMPLETE]');
   });
 });

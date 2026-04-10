@@ -119,6 +119,159 @@ describe('MicBar', () => {
     });
   });
 
+  describe('Completion button', () => {
+    it('is hidden when canComplete is false', () => {
+      render(<MicBar {...defaultProps} mode="idle" canComplete={false} />);
+      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+    });
+
+    it('is visible when canComplete is true and mode is idle', () => {
+      render(
+        <MicBar {...defaultProps} mode="idle" canComplete={true} onCompleteInterview={vi.fn()} />,
+      );
+      expect(screen.getByText("I'm finished describing my process")).toBeInTheDocument();
+    });
+
+    it('is hidden during recording mode even when canComplete is true', () => {
+      render(
+        <MicBar
+          {...defaultProps}
+          mode="recording"
+          canComplete={true}
+          onCompleteInterview={vi.fn()}
+        />,
+      );
+      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+    });
+
+    it('is hidden during processing mode even when canComplete is true', () => {
+      render(
+        <MicBar
+          {...defaultProps}
+          mode="processing"
+          canComplete={true}
+          onCompleteInterview={vi.fn()}
+        />,
+      );
+      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+    });
+
+    it('is hidden during text mode even when canComplete is true', () => {
+      render(
+        <MicBar {...defaultProps} mode="text" canComplete={true} onCompleteInterview={vi.fn()} />,
+      );
+      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+    });
+
+    it('clicking completion button calls onCompleteInterview', () => {
+      const onCompleteInterview = vi.fn();
+      render(
+        <MicBar
+          {...defaultProps}
+          mode="idle"
+          canComplete={true}
+          onCompleteInterview={onCompleteInterview}
+        />,
+      );
+      fireEvent.click(screen.getByText("I'm finished describing my process"));
+      expect(onCompleteInterview).toHaveBeenCalled();
+    });
+
+    it('shows "Wrapping up..." text when isCompleting is true', () => {
+      render(
+        <MicBar
+          {...defaultProps}
+          mode="idle"
+          canComplete={true}
+          isCompleting={true}
+          onCompleteInterview={vi.fn()}
+        />,
+      );
+      expect(screen.getByText('Wrapping up...')).toBeInTheDocument();
+      expect(screen.queryByText("I'm finished describing my process")).not.toBeInTheDocument();
+    });
+
+    it('has correct aria-label for completion button', () => {
+      render(
+        <MicBar {...defaultProps} mode="idle" canComplete={true} onCompleteInterview={vi.fn()} />,
+      );
+      expect(
+        screen.getByLabelText('End interview and generate process diagram'),
+      ).toBeInTheDocument();
+    });
+
+    it('has aria-busy when completing', () => {
+      render(
+        <MicBar
+          {...defaultProps}
+          mode="idle"
+          canComplete={true}
+          isCompleting={true}
+          onCompleteInterview={vi.fn()}
+        />,
+      );
+      const button = screen.getByLabelText('Generating your process diagram...');
+      expect(button).toHaveAttribute('aria-busy', 'true');
+    });
+  });
+
+  describe('Waveform in MicBar', () => {
+    it('renders waveform bars when mode is recording and isRecording is true', () => {
+      const { container } = render(
+        <MicBar {...defaultProps} mode="recording" isRecording={true} />,
+      );
+      const waveformSection = screen.getByRole('status');
+      expect(waveformSection).toHaveAttribute('aria-label', 'Recording audio — waveform animation');
+      // Check 8 waveform bars are present
+      const ariaHiddenEls = container.querySelectorAll('[aria-hidden="true"]');
+      let barCount = 0;
+      ariaHiddenEls.forEach((el) => {
+        const children = el.querySelectorAll('div');
+        if (children.length === 8) barCount = 8;
+      });
+      expect(barCount).toBe(8);
+    });
+
+    it('does NOT render waveform in idle mode', () => {
+      render(<MicBar {...defaultProps} mode="idle" isRecording={false} />);
+      expect(screen.queryByText("I'm hearing you...")).not.toBeInTheDocument();
+    });
+
+    it('does NOT render waveform in processing mode', () => {
+      render(<MicBar {...defaultProps} mode="processing" isRecording={false} />);
+      expect(screen.queryByText("I'm hearing you...")).not.toBeInTheDocument();
+    });
+
+    it('does NOT render waveform in text mode', () => {
+      render(<MicBar {...defaultProps} mode="text" isRecording={false} />);
+      expect(screen.queryByText("I'm hearing you...")).not.toBeInTheDocument();
+    });
+
+    it('renders pulsing dot and "I\'m hearing you..." text during recording', () => {
+      render(<MicBar {...defaultProps} mode="recording" isRecording={true} />);
+      expect(screen.getByText("I'm hearing you...")).toBeInTheDocument();
+    });
+
+    it('renders "Words appear after Done" helper text during recording', () => {
+      render(<MicBar {...defaultProps} mode="recording" isRecording={true} />);
+      expect(screen.getByText('Words appear after Done')).toBeInTheDocument();
+    });
+
+    it('has role="status" and correct aria-label on waveform section', () => {
+      render(<MicBar {...defaultProps} mode="recording" isRecording={true} />);
+      const status = screen.getByRole('status');
+      expect(status).toHaveAttribute('aria-label', 'Recording audio — waveform animation');
+    });
+
+    it('waveform bars container has aria-hidden="true"', () => {
+      const { container } = render(
+        <MicBar {...defaultProps} mode="recording" isRecording={true} />,
+      );
+      const ariaHiddenElements = container.querySelectorAll('[aria-hidden="true"]');
+      expect(ariaHiddenElements.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('Accessibility', () => {
     it('has aria-live polite region for status text', () => {
       render(<MicBar {...defaultProps} mode="idle" />);

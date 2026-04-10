@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 
 export type MicBarMode = 'idle' | 'recording' | 'processing' | 'text';
 
+const WAVEFORM_BAR_COUNT = 8;
+const BAR_DELAYS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7];
+
 interface MicBarProps {
   mode: MicBarMode;
   onStartRecording: () => void;
@@ -12,6 +15,10 @@ interface MicBarProps {
   onToggleTextMode: () => void;
   onSendText: (text: string) => void;
   disabled?: boolean;
+  onCompleteInterview?: () => void;
+  canComplete?: boolean;
+  isCompleting?: boolean;
+  isRecording?: boolean;
 }
 
 const MicIcon = () => (
@@ -83,6 +90,10 @@ export function MicBar({
   onToggleTextMode,
   onSendText,
   disabled = false,
+  onCompleteInterview,
+  canComplete = false,
+  isCompleting = false,
+  isRecording = false,
 }: MicBarProps) {
   const [textInput, setTextInput] = useState('');
   const textInputRef = useRef<HTMLInputElement>(null);
@@ -170,6 +181,50 @@ export function MicBar({
       className="fixed bottom-0 left-1/2 w-full max-w-[800px] -translate-x-1/2 border-t bg-card px-4 py-3"
       style={{ borderColor: 'var(--border)' }}
     >
+      {/* Waveform section — above controls during recording */}
+      {mode === 'recording' && isRecording && (
+        <div
+          role="status"
+          aria-label="Recording audio — waveform animation"
+          className="mb-2 pb-2"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{
+                  backgroundColor: 'var(--success)',
+                  animation: 'pulse-dot 1.5s infinite',
+                }}
+                aria-hidden="true"
+              />
+              <span className="text-sm font-medium" style={{ color: 'var(--success)' }}>
+                I&apos;m hearing you...
+              </span>
+            </div>
+            <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+              Words appear after Done
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-1" aria-hidden="true">
+            {Array.from({ length: WAVEFORM_BAR_COUNT }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: '3px',
+                  height: '8px',
+                  backgroundColor: 'var(--success)',
+                  animation: 'waveform 0.8s ease-in-out infinite',
+                  animationDelay: `${BAR_DELAYS[i]}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         {/* Mic button */}
         <div className="relative shrink-0">
@@ -242,6 +297,36 @@ export function MicBar({
         </button>
       </div>
 
+      {/* Completion button — only in idle mode when enough cycles */}
+      {canComplete && mode === 'idle' && (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={onCompleteInterview}
+            disabled={isCompleting}
+            aria-label={
+              isCompleting
+                ? 'Generating your process diagram...'
+                : 'End interview and generate process diagram'
+            }
+            aria-busy={isCompleting || undefined}
+            className="w-full rounded-lg px-4 py-2 text-sm font-medium outline-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
+            style={{
+              color: 'var(--primary)',
+              backgroundColor: 'transparent',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {isCompleting ? 'Wrapping up...' : "I'm finished describing my process"}
+          </button>
+        </div>
+      )}
+
+      {/* Screen reader announcement for completion */}
+      <div aria-live="polite" className="sr-only">
+        {isCompleting ? 'Generating your process diagram. Please wait.' : ''}
+      </div>
+
       <style>{`
         @keyframes pulse-ring {
           0% {
@@ -252,6 +337,14 @@ export function MicBar({
             transform: scale(1.8);
             opacity: 0;
           }
+        }
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        @keyframes waveform {
+          0%, 100% { height: 8px; }
+          50% { height: 28px; }
         }
       `}</style>
     </div>

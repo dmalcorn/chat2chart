@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { MicBar } from './mic-bar';
 import type { MicBarMode } from './mic-bar';
-import { ActiveListeningState } from './active-listening-state';
 import { AgentMessageCard } from './agent-message-card';
 import { SpeechCard } from './speech-card';
 import { ReflectiveSummaryCard } from './reflective-summary-card';
@@ -23,10 +22,46 @@ export function ConversationThread({ token }: ConversationThreadProps) {
     messages,
     isAgentTyping,
     isProcessingSpeech,
+    confirmedCycleCount,
     sendMessage,
     confirmSummary,
     requestCorrection,
+    completeInterview,
+    completionSuggested,
   } = useInterviewStream(token);
+
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const completionTriggeredRef = useRef(false);
+
+  // P4: Use ref for latest handleComplete to avoid stale closure in useEffect
+  const handleCompleteRef = useRef<() => Promise<void>>();
+
+  const handleComplete = useCallback(async () => {
+    setIsCompleting(true);
+    setCompletionError(null);
+    const result = await completeInterview();
+    if (result.success) {
+      // Force a full page reload to let the server component re-render
+      // based on the updated interview status
+      window.location.reload();
+    } else {
+      setCompletionError('Something went wrong completing the interview. Please try again.');
+      setIsCompleting(false);
+      // P3: Reset so agent-driven completion can retry
+      completionTriggeredRef.current = false;
+    }
+  }, [completeInterview]);
+
+  handleCompleteRef.current = handleComplete;
+
+  // Auto-trigger completion when agent suggests it
+  useEffect(() => {
+    if (completionSuggested && !completionTriggeredRef.current && !isCompleting) {
+      completionTriggeredRef.current = true;
+      handleCompleteRef.current?.();
+    }
+  }, [completionSuggested, isCompleting]);
 
   const { status: sttStatus, startRecording, stopRecording, isSupported } = useSpeechRecognition();
 
@@ -166,15 +201,31 @@ export function ConversationThread({ token }: ConversationThreadProps) {
   return (
     <div className="flex h-screen flex-col">
       {/* Scrollable message area */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-[120px]">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto"
+        style={{ paddingBottom: sttStatus === 'recording' ? '200px' : '120px' }}
+      >
         <div className="mx-auto flex max-w-[800px] flex-col gap-4 p-4">
           {renderMessages()}
 
-          {/* Active listening state during recording */}
-          {sttStatus === 'recording' && <ActiveListeningState />}
-
           {/* Typing indicator */}
           {isAgentTyping && <TypingIndicator />}
+
+          {/* Completion error */}
+          {completionError && (
+            <div
+              className="rounded-lg border px-4 py-3 text-sm"
+              style={{
+                backgroundColor: 'var(--destructive-soft)',
+                borderColor: 'var(--destructive)',
+                color: 'var(--destructive)',
+              }}
+              role="alert"
+            >
+              {completionError}
+            </div>
+          )}
 
           {/* Scroll sentinel */}
           <div ref={sentinelRef} />
@@ -188,7 +239,11 @@ export function ConversationThread({ token }: ConversationThreadProps) {
         onStopRecording={handleStopRecording}
         onToggleTextMode={handleToggleTextMode}
         onSendText={handleSendText}
-        disabled={isProcessingSpeech}
+        disabled={isProcessingSpeech || isCompleting}
+        canComplete={confirmedCycleCount >= 2}
+        onCompleteInterview={handleComplete}
+        isCompleting={isCompleting}
+        isRecording={sttStatus === 'recording'}
       />
     </div>
   );

@@ -88,3 +88,8 @@
 - Swallowed errors in API routes — bare `catch {}` with no server-side logging [interviews/route.ts:43, project/route.ts:27]. Pre-existing pattern across all routes.
 - No CSRF token on login form — JSON content-type provides implicit protection [login-form.tsx]. Pre-existing auth design decision.
 - Duplicate auth in middleware + page.tsx — supervisor with valid session but no project gets redirected to login instead of a meaningful error [page.tsx:30, middleware.ts]. Edge case in MVP single-project setup.
+
+## Deferred from: code review of story 7-1 (2026-04-09)
+
+- TOCTOU race on concurrent completion requests — `transitionInterview` does read-then-write without atomic compare-and-swap. Two simultaneous POST `/complete` can both pass the status check. Pre-existing state machine design [src/lib/synthesis/state-machine.ts].
+- Zero verified exchanges produces degenerate schema — if interview completes with no confirmed summaries, extraction creates a single meaningless "Process step" that passes quality gate. Pre-existing extraction fallback behavior [src/lib/interview/schema-extractor.ts].

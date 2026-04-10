@@ -4,6 +4,8 @@ import { useReducer, useCallback } from 'react';
 
 // --- Types ---
 
+const INTERVIEW_COMPLETE_MARKER = '[INTERVIEW_COMPLETE]';
+
 export type MessageType =
   | 'agent_question'
   | 'speech_card'
@@ -32,6 +34,8 @@ export interface ThreadState {
   isAutoScrollEnabled: boolean;
   isAgentTyping: boolean;
   isProcessingSpeech: boolean;
+  confirmedCycleCount: number;
+  completionSuggested: boolean;
 }
 
 // --- Actions ---
@@ -47,7 +51,10 @@ type ThreadAction =
   | { type: 'SET_TYPING'; payload: boolean }
   | { type: 'SET_PROCESSING'; payload: boolean }
   | { type: 'SET_AUTO_SCROLL'; payload: boolean }
-  | { type: 'APPEND_STREAMING_CONTENT'; payload: { id: string; content: string } };
+  | { type: 'APPEND_STREAMING_CONTENT'; payload: { id: string; content: string } }
+  | { type: 'INCREMENT_CONFIRMED_CYCLES' }
+  | { type: 'SET_COMPLETION_SUGGESTED'; payload: boolean }
+  | { type: 'STRIP_MARKER'; payload: { id: string; marker: string } };
 
 // --- Reducer ---
 
@@ -91,6 +98,19 @@ export function threadReducer(state: ThreadState, action: ThreadAction): ThreadS
           m.id === action.payload.id ? { ...m, content: m.content + action.payload.content } : m,
         ),
       };
+    case 'INCREMENT_CONFIRMED_CYCLES':
+      return { ...state, confirmedCycleCount: state.confirmedCycleCount + 1 };
+    case 'SET_COMPLETION_SUGGESTED':
+      return { ...state, completionSuggested: action.payload };
+    case 'STRIP_MARKER':
+      return {
+        ...state,
+        messages: state.messages.map((m) =>
+          m.id === action.payload.id
+            ? { ...m, content: m.content.replace(action.payload.marker, '').trimEnd() }
+            : m,
+        ),
+      };
     default:
       return state;
   }
@@ -101,6 +121,8 @@ const initialState: ThreadState = {
   isAutoScrollEnabled: true,
   isAgentTyping: false,
   isProcessingSpeech: false,
+  confirmedCycleCount: 0,
+  completionSuggested: false,
 };
 
 // --- SSE Parser ---
@@ -240,6 +262,7 @@ export function useInterviewStream(token: string) {
                 interviewExchangeId: string;
                 segmentId: string;
                 exchangeType: string;
+                completionSuggested?: boolean;
               };
 
               // Patch segmentId onto the speech card and agent message
@@ -249,10 +272,26 @@ export function useInterviewStream(token: string) {
               });
 
               if (activeMessageId) {
-                dispatch({
-                  type: 'PATCH_MESSAGE',
-                  payload: { id: activeMessageId, patch: { segmentId: parsed.segmentId } },
-                });
+                // P2: Strip completion marker from displayed content
+                if (parsed.completionSuggested) {
+                  dispatch({
+                    type: 'PATCH_MESSAGE',
+                    payload: {
+                      id: activeMessageId,
+                      patch: { segmentId: parsed.segmentId },
+                    },
+                  });
+                  // Remove marker text that was streamed to the client
+                  dispatch({
+                    type: 'STRIP_MARKER',
+                    payload: { id: activeMessageId, marker: INTERVIEW_COMPLETE_MARKER },
+                  });
+                } else {
+                  dispatch({
+                    type: 'PATCH_MESSAGE',
+                    payload: { id: activeMessageId, patch: { segmentId: parsed.segmentId } },
+                  });
+                }
 
                 // If it was a reflective summary, transition to awaiting confirmation
                 if (activeMessageType === 'reflective_summary') {
@@ -261,6 +300,11 @@ export function useInterviewStream(token: string) {
                     payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
                   });
                 }
+              }
+
+              // Agent-driven completion detection
+              if (parsed.completionSuggested) {
+                dispatch({ type: 'SET_COMPLETION_SUGGESTED', payload: true });
               }
 
               dispatch({ type: 'SET_TYPING', payload: false });
@@ -325,6 +369,7 @@ export function useInterviewStream(token: string) {
           type: 'SET_SUMMARY_STATE_BY_SEGMENT',
           payload: { segmentId, summaryState: 'confirmed' },
         });
+        dispatch({ type: 'INCREMENT_CONFIRMED_CYCLES' });
 
         // D2: Consume the SSE stream — agent sends a follow-up question
         dispatch({ type: 'SET_TYPING', payload: true });
@@ -377,6 +422,7 @@ export function useInterviewStream(token: string) {
               const parsed = JSON.parse(sseEvent.data) as {
                 interviewExchangeId: string;
                 segmentId: string;
+                completionSuggested?: boolean;
               };
               if (activeMessageId) {
                 dispatch({
@@ -389,6 +435,9 @@ export function useInterviewStream(token: string) {
                     payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
                   });
                 }
+              }
+              if (parsed.completionSuggested) {
+                dispatch({ type: 'SET_COMPLETION_SUGGESTED', payload: true });
               }
               dispatch({ type: 'SET_TYPING', payload: false });
               activeMessageId = null;
@@ -481,6 +530,7 @@ export function useInterviewStream(token: string) {
               const parsed = JSON.parse(sseEvent.data) as {
                 interviewExchangeId: string;
                 segmentId: string;
+                completionSuggested?: boolean;
               };
               if (activeMessageId) {
                 dispatch({
@@ -493,6 +543,9 @@ export function useInterviewStream(token: string) {
                     payload: { id: activeMessageId, summaryState: 'awaiting_confirmation' },
                   });
                 }
+              }
+              if (parsed.completionSuggested) {
+                dispatch({ type: 'SET_COMPLETION_SUGGESTED', payload: true });
               }
               dispatch({ type: 'SET_TYPING', payload: false });
               activeMessageId = null;
@@ -518,13 +571,36 @@ export function useInterviewStream(token: string) {
     [token],
   );
 
+  const completeInterview = useCallback(async (): Promise<{
+    success: boolean;
+    schemaReady?: boolean;
+  }> => {
+    try {
+      const response = await fetch(`/api/interview/${token}/complete`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        return { success: false };
+      }
+
+      const body = await response.json();
+      return { success: true, schemaReady: body.data?.schemaReady };
+    } catch {
+      return { success: false };
+    }
+  }, [token]);
+
   return {
     messages: state.messages,
     isAgentTyping: state.isAgentTyping,
     isProcessingSpeech: state.isProcessingSpeech,
+    confirmedCycleCount: state.confirmedCycleCount,
+    completionSuggested: state.completionSuggested,
     sendMessage,
     confirmSummary,
     requestCorrection,
+    completeInterview,
     dispatch,
   };
 }
