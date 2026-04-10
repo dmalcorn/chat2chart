@@ -235,23 +235,88 @@ describe('extractProcessSchema (orchestrator)', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns programmatic result when quality gate passes', async () => {
+  it('uses LLM extraction as primary method', async () => {
     const summaries = [
       makeSummary('I scan the documents and sort the mail', 1),
       makeSummary('Then I review the budget and approve expenses', 2),
     ];
     const context = makeContext();
 
+    const llmSchema = {
+      schemaVersion: '1.0' as const,
+      processNodeId: context.processNodeId,
+      interviewId: context.interviewId,
+      steps: [
+        {
+          id: randomUUID(),
+          label: 'Scan documents',
+          type: 'step' as const,
+          sourceType: 'interview_discovered' as const,
+          sourceExchangeIds: [summaries[0].segmentId],
+        },
+        {
+          id: randomUUID(),
+          label: 'Sort mail',
+          type: 'step' as const,
+          sourceType: 'interview_discovered' as const,
+          sourceExchangeIds: [summaries[0].segmentId],
+        },
+      ],
+      connections: [],
+      metadata: {
+        extractionMethod: 'llm' as const,
+        extractedAt: new Date().toISOString(),
+        stepCount: 2,
+        decisionPointCount: 0,
+      },
+    };
+
+    mockResolveProvider.mockResolvedValue({
+      sendMessage: vi.fn().mockResolvedValue(JSON.stringify(llmSchema)),
+      streamResponse: vi.fn(),
+      metadata: {
+        providerName: 'anthropic',
+        modelName: 'claude-sonnet-4-6',
+        modelVersion: '1.0',
+        tokenLimits: { input: 200000, output: 8192 },
+      },
+    } as unknown as LLMProvider);
+
+    const result = await extractProcessSchema(summaries, context);
+
+    expect(result.metadata.extractionMethod).toBe('llm');
+  });
+
+  it('falls back to programmatic when LLM fails', async () => {
+    const summaries = [
+      makeSummary('I scan the documents and sort the mail', 1),
+      makeSummary('Then I review the budget and approve expenses', 2),
+    ];
+    const context = makeContext();
+
+    mockResolveProvider.mockRejectedValue(new Error('LLM unavailable'));
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     const result = await extractProcessSchema(summaries, context);
 
     expect(result.metadata.extractionMethod).toBe('programmatic');
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[schema-extractor] LLM extraction failed, falling back to programmatic',
+      expect.objectContaining({ error: 'LLM unavailable' }),
+    );
+
+    warnSpy.mockRestore();
   });
 
-  it('logs extraction method, quality gate results, duration, and step count', async () => {
+  it('logs extraction method, duration, and step count', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const summaries = [makeSummary('I process the incoming requests', 1)];
     const context = makeContext();
+
+    // LLM will fail (no mock), falls back to programmatic
+    mockResolveProvider.mockRejectedValue(new Error('no mock'));
 
     await extractProcessSchema(summaries, context);
 
@@ -265,5 +330,6 @@ describe('extractProcessSchema (orchestrator)', () => {
     );
 
     consoleSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 });

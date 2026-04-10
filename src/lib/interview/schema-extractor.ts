@@ -191,7 +191,15 @@ export async function extractViaLlm(
     .map((s, i) => `Summary ${i + 1} (segment ${s.segmentId}): ${s.content}`)
     .join('\n\n');
 
-  const systemPrompt = `You are a process extraction agent. Given verified interview summaries describing a work process, extract a structured process schema.
+  const systemPrompt = `You are a process extraction agent. Given verified interview summaries describing a work process, extract a structured process schema that accurately represents the interviewee's workflow.
+
+Each summary follows a structured format:
+- **What happens:** [action] on [object] by [actor]
+- **Why:** [purpose or trigger]
+- **How:** [method, system, or tool used]
+- **Then:** [what happens next, or handoff]
+
+Use this structure to identify distinct process steps, decision points, and the connections between them. Preserve the interviewee's language and level of detail. One summary may contain multiple steps or a single step — use your judgment based on the content.
 
 Output ONLY valid JSON matching this exact structure:
 {
@@ -211,7 +219,7 @@ Output ONLY valid JSON matching this exact structure:
     { "from": "<step id>", "to": "<step id>", "label": "<optional: for decision branches>" }
   ],
   "metadata": {
-    "extractionMethod": "llm_fallback",
+    "extractionMethod": "llm",
     "extractedAt": "${new Date().toISOString()}",
     "stepCount": <number of steps>,
     "decisionPointCount": <number of decision type steps>
@@ -219,13 +227,14 @@ Output ONLY valid JSON matching this exact structure:
 }
 
 Rules:
-- Step labels must be verb phrases (e.g., "Review budget request", "Sort incoming mail")
-- Use type "decision" for conditional/branching steps (if/when/depends)
+- Step labels must be clear verb phrases (e.g., "Review budget request", "Sort incoming mail by form type")
+- Use type "decision" for conditional/branching steps — where the interviewee described "if", "when", "depends on", "sometimes", or alternate paths
 - Use type "step" for sequential process steps
 - All sourceType values must be "interview_discovered"
 - Generate valid UUID v4 for each step id
-- Connections define the flow: sequential steps connect in order, decision steps branch with labeled connections ("Yes"/"No")
-- stepCount and decisionPointCount in metadata must match the actual counts`;
+- Connections define the flow: sequential steps connect in order, decision steps branch with labeled connections (e.g., "Yes"/"No", "Damaged"/"Intact", or other contextual labels from the interview)
+- stepCount and decisionPointCount in metadata must match the actual counts
+- Aim for clarity in a flowchart — a reader unfamiliar with the process should understand the workflow from the step labels alone`;
 
   const response = await provider.sendMessage(
     systemPrompt,
@@ -250,39 +259,37 @@ export async function extractProcessSchema(
 ): Promise<IndividualProcessSchema> {
   const startTime = Date.now();
 
-  // Tier 1: Programmatic NLP extraction
-  const programmaticResult = extractProgrammatic(summaries, context);
-
-  // Tier 2: Quality gate
-  const qualityGateResult = runQualityGate(programmaticResult, summaries);
-
-  if (qualityGateResult.passed) {
+  // Tier 1: LLM extraction (primary — higher quality)
+  try {
+    const llmResult = await extractViaLlm(summaries, context);
     const duration = Date.now() - startTime;
+
     console.log('[schema-extractor] Extraction complete', {
-      method: 'programmatic',
-      qualityGate: qualityGateResult,
+      method: 'llm',
       durationMs: duration,
-      stepCount: programmaticResult.metadata.stepCount,
+      stepCount: llmResult.metadata.stepCount,
     });
-    return programmaticResult;
+
+    return llmResult;
+  } catch (llmError) {
+    console.warn('[schema-extractor] LLM extraction failed, falling back to programmatic', {
+      error: llmError instanceof Error ? llmError.message : String(llmError),
+    });
   }
 
-  // Tier 3: LLM fallback
-  console.log('[schema-extractor] Quality gate failed, falling back to LLM', {
-    qualityGate: qualityGateResult,
-  });
-
-  const llmResult = await extractViaLlm(summaries, context);
+  // Tier 2: Programmatic NLP fallback (when LLM is unavailable)
+  const programmaticResult = extractProgrammatic(summaries, context);
+  const qualityGateResult = runQualityGate(programmaticResult, summaries);
   const duration = Date.now() - startTime;
 
   console.log('[schema-extractor] Extraction complete', {
-    method: 'llm_fallback',
+    method: 'programmatic_fallback',
     qualityGate: qualityGateResult,
     durationMs: duration,
-    stepCount: llmResult.metadata.stepCount,
+    stepCount: programmaticResult.metadata.stepCount,
   });
 
-  return llmResult;
+  return programmaticResult;
 }
 
 // --- Helpers ---

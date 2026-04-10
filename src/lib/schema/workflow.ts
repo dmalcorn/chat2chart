@@ -37,7 +37,7 @@ export const individualProcessSchemaSchema = z.object({
   steps: z.array(individualStepSchema).min(1),
   connections: z.array(individualConnectionSchema),
   metadata: z.object({
-    extractionMethod: z.enum(['programmatic', 'llm_fallback']),
+    extractionMethod: z.enum(['programmatic', 'llm', 'llm_fallback']),
     extractedAt: z.iso.datetime(),
     stepCount: z.number().int().min(1),
     decisionPointCount: z.number().int().min(0),
