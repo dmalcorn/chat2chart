@@ -1,6 +1,6 @@
 # Story 5.3: Synthesis Comparison View (Mode 2) with Divergence Navigation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -22,87 +22,87 @@ So that I can discover where processes differ.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `src/components/supervisor/comparison-view.tsx` — the split-screen layout container (AC: #1, #2, #7, #8)
-  - [ ] 1.1 Create a `"use client"` component `ComparisonView` that manages the Mode 1 / Mode 2 toggle state via `useState`
-  - [ ] 1.2 Accept props: `synthesisData` (synthesis result with `workflowJson`, `mermaidDefinition`, divergence annotations), `individualSchemas` (array of individual schemas with interviewee name/role, `schemaJson`, `mermaidDefinition`), `processNodeName` (string)
-  - [ ] 1.3 Implement viewport width detection via `useEffect` + `window.matchMedia('(min-width: 1200px)')` — track in state as `isWideViewport`
-  - [ ] 1.4 When `isWideViewport` is false: hide the "Compare with Synthesis" button, force Mode 1, and if currently in Mode 2, auto-revert to Mode 1
-  - [ ] 1.5 Implement Mode 2 layout as a CSS grid or flex container: left panel ~55% width for synthesis, right panel ~45% width for the carousel
-  - [ ] 1.6 Apply CSS transition for the Mode 1 to Mode 2 switch — synthesis panel slides in from left using `transform: translateX(-100%)` to `translateX(0)` with `transition: transform 250ms ease-out` (200-300ms range)
-  - [ ] 1.7 Render the "Compare with Synthesis" button (primary style, blue) below the carousel in Mode 1. Render the "Back to Individual Review" button (secondary style, outlined) in Mode 2
-  - [ ] 1.8 Manage local state for: `mode` (`'individual' | 'comparison'`), `selectedDivergenceId` (string | null), `carouselIndex` (number), `highlightedStepId` (string | null)
-  - [ ] 1.9 Pass a callback `onDivergenceClick` down to the synthesis panel that updates `carouselIndex`, `selectedDivergenceId`, and `highlightedStepId` based on the divergence data
+- [x] Task 1: Create `src/components/supervisor/comparison-view.tsx` — the split-screen layout container (AC: #1, #2, #7, #8)
+  - [x] 1.1 Create a `"use client"` component `ComparisonView` that manages the Mode 1 / Mode 2 toggle state via `useState`
+  - [x] 1.2 Accept props: `synthesisData` (synthesis result with `workflowJson`, `mermaidDefinition`, divergence annotations), `individualSchemas` (array of individual schemas with interviewee name/role, `schemaJson`, `mermaidDefinition`), `processNodeName` (string)
+  - [x] 1.3 Implement viewport width detection via `useEffect` + `window.matchMedia('(min-width: 1200px)')` — track in state as `isWideViewport`
+  - [x] 1.4 When `isWideViewport` is false: hide the "Compare with Synthesis" button, force Mode 1, and if currently in Mode 2, auto-revert to Mode 1
+  - [x] 1.5 Implement Mode 2 layout as a CSS grid or flex container: left panel ~55% width for synthesis, right panel ~45% width for the carousel
+  - [x] 1.6 Apply CSS transition for the Mode 1 to Mode 2 switch — synthesis panel slides in from left using `transform: translateX(-100%)` to `translateX(0)` with `transition: transform 250ms ease-out` (200-300ms range)
+  - [x] 1.7 Render the "Compare with Synthesis" button (primary style, blue) below the carousel in Mode 1. Render the "Back to Individual Review" button (secondary style, outlined) in Mode 2
+  - [x] 1.8 Manage local state for: `mode` (`'individual' | 'comparison'`), `selectedDivergenceId` (string | null), `carouselIndex` (number), `highlightedStepId` (string | null)
+  - [x] 1.9 Pass a callback `onDivergenceClick` down to the synthesis panel that updates `carouselIndex`, `selectedDivergenceId`, and `highlightedStepId` based on the divergence data
 
-- [ ] Task 2: Create `src/components/supervisor/divergence-annotation.tsx` — badges and detail cards (AC: #3, #4, #5, #6, #9)
-  - [ ] 2.1 Create a `"use client"` component `DivergenceBadge` that renders a teal pill badge on a synthesis diagram node
-  - [ ] 2.2 Accept props: `divergence` (object with `id`, `type`, `label`, `description`, `affectedIntervieweeIds`, `affectedIntervieweeNames`, `confidence`, `relatedStepId`, `relatedIntervieweeIndex`), `onClick` callback, `isSelected` boolean
-  - [ ] 2.3 Render badge with three color variants based on `type`:
+- [x] Task 2: Create `src/components/supervisor/divergence-annotation.tsx` — badges and detail cards (AC: #3, #4, #5, #6, #9)
+  - [x] 2.1 Create a `"use client"` component `DivergenceBadge` that renders a teal pill badge on a synthesis diagram node
+  - [x] 2.2 Accept props: `divergence` (object with `id`, `type`, `label`, `description`, `affectedIntervieweeIds`, `affectedIntervieweeNames`, `confidence`, `relatedStepId`, `relatedIntervieweeIndex`), `onClick` callback, `isSelected` boolean
+  - [x] 2.3 Render badge with three color variants based on `type`:
     - `"genuinely_unique"` — teal background (`bg-teal-600 text-white`), label "Genuinely Unique"
     - `"sequence_conflict"` — darker teal background (`bg-teal-700 text-white`), label "Sequence Conflict"
     - `"uncertain"` — amber background (`bg-amber-500 text-white`), label "Uncertain — Needs Review"
-  - [ ] 2.4 Badge is a `<button>` element with `role="button"` and `tabIndex={0}` — clickable and keyboard-focusable
-  - [ ] 2.5 On click or Enter keypress, call `onClick` with the divergence data (AC: #5, #9)
-  - [ ] 2.6 Badge specs: pill shape (`rounded-full`), 10px font weight 600, padding for pill appearance
+  - [x] 2.4 Badge is a `<button>` element with `role="button"` and `tabIndex={0}` — clickable and keyboard-focusable
+  - [x] 2.5 On click or Enter keypress, call `onClick` with the divergence data (AC: #5, #9)
+  - [x] 2.6 Badge specs: pill shape (`rounded-full`), 10px font weight 600, padding for pill appearance
 
-- [ ] Task 3: Create `DivergenceDetailCard` sub-component (AC: #6)
-  - [ ] 3.1 Create a component that renders the divergence detail card when a badge is selected
-  - [ ] 3.2 Accept props: `divergence` (same type as badge), `onClose` callback (optional)
-  - [ ] 3.3 Render card with: 3px teal left border (`border-l-[3px] border-teal-600`), card background, `shadow-sm`, `rounded-lg`
-  - [ ] 3.4 Card content layout:
+- [x] Task 3: Create `DivergenceDetailCard` sub-component (AC: #6)
+  - [x] 3.1 Create a component that renders the divergence detail card when a badge is selected
+  - [x] 3.2 Accept props: `divergence` (same type as badge), `onClose` callback (optional)
+  - [x] 3.3 Render card with: 3px teal left border (`border-l-[3px] border-teal-600`), card background, `shadow-sm`, `rounded-lg`
+  - [x] 3.4 Card content layout:
     - Top row: divergence type badge (small version) + confidence level on the right (e.g., "Confidence: N/A" or "Confidence: High")
     - Step name (bold, e.g., "Step 5: Verify / QC")
     - Explanation text (the narrative description from the synthesis)
     - Source tags: muted background pills showing interviewee names involved and "Not mentioned" tags for those who did not include the step
-  - [ ] 3.5 Source tags use muted background, 6px radius, 12px font, muted-foreground color
+  - [x] 3.5 Source tags use muted background, 6px radius, 12px font, muted-foreground color
 
-- [ ] Task 4: Integrate synthesis diagram rendering with divergence overlays in the synthesis panel (AC: #3, #4)
-  - [ ] 4.1 In the synthesis panel (left side of comparison view), render a `DiagramCanvas` component from `src/components/diagram/diagram-canvas.tsx` (shared component from Story 3.6) with the synthesis `mermaidDefinition`
-  - [ ] 4.2 After Mermaid renders, parse the divergence metadata from the synthesis `workflowJson` (not from Mermaid comments) to determine which nodes have divergence annotations
-  - [ ] 4.3 Render `DivergenceBadge` components as absolutely positioned overlays on top of the corresponding Mermaid diagram nodes — position badges using the rendered SVG node coordinates
-  - [ ] 4.4 Use `useEffect` to re-calculate badge positions when the diagram re-renders or the panel resizes
-  - [ ] 4.5 DiagramCanvas must support a `variant="synthesis"` prop (or similar) that renders at full panel width (no max-width 700px constraint) and enables divergence badge overlay positioning
+- [x] Task 4: Integrate synthesis diagram rendering with divergence overlays in the synthesis panel (AC: #3, #4)
+  - [x] 4.1 In the synthesis panel (left side of comparison view), render a `DiagramCanvas` component from `src/components/diagram/diagram-canvas.tsx` (shared component from Story 3.6) with the synthesis `mermaidDefinition`
+  - [x] 4.2 After Mermaid renders, parse the divergence metadata from the synthesis `workflowJson` (not from Mermaid comments) to determine which nodes have divergence annotations
+  - [x] 4.3 Render `DivergenceBadge` components as absolutely positioned overlays on top of the corresponding Mermaid diagram nodes — position badges using the rendered SVG node coordinates
+  - [x] 4.4 Use `useEffect` to re-calculate badge positions when the diagram re-renders or the panel resizes
+  - [x] 4.5 DiagramCanvas must support a `variant="synthesis"` prop (or similar) that renders at full panel width (no max-width 700px constraint) and enables divergence badge overlay positioning
 
-- [ ] Task 5: Implement divergence click-to-navigate behavior (AC: #5, #6)
-  - [ ] 5.1 When a divergence badge is clicked, determine the `relatedIntervieweeIndex` from the divergence data — this is the carousel index to navigate to
-  - [ ] 5.2 Update `carouselIndex` in the parent `ComparisonView` state to auto-navigate the carousel
-  - [ ] 5.3 Update `highlightedStepId` in the parent state — pass this down to the carousel's `DiagramCanvas` so the corresponding node in the individual diagram gets a teal glow highlight
-  - [ ] 5.4 Apply the teal glow highlight on the individual diagram's matching node: `box-shadow: 0 0 0 3px rgba(13,148,136,0.25)` — target the SVG node element via a CSS class or inline style
-  - [ ] 5.5 Show the `DivergenceDetailCard` below or beside the synthesis diagram when a divergence is selected
-  - [ ] 5.6 Clear the highlight and detail card when a different divergence is selected or when the user navigates the carousel manually
+- [x] Task 5: Implement divergence click-to-navigate behavior (AC: #5, #6)
+  - [x] 5.1 When a divergence badge is clicked, determine the `relatedIntervieweeIndex` from the divergence data — this is the carousel index to navigate to
+  - [x] 5.2 Update `carouselIndex` in the parent `ComparisonView` state to auto-navigate the carousel
+  - [x] 5.3 Update `highlightedStepId` in the parent state — pass this down to the carousel's `DiagramCanvas` so the corresponding node in the individual diagram gets a teal glow highlight
+  - [x] 5.4 Apply the teal glow highlight on the individual diagram's matching node: `box-shadow: 0 0 0 3px rgba(13,148,136,0.25)` — target the SVG node element via a CSS class or inline style
+  - [x] 5.5 Show the `DivergenceDetailCard` below or beside the synthesis diagram when a divergence is selected
+  - [x] 5.6 Clear the highlight and detail card when a different divergence is selected or when the user navigates the carousel manually
 
-- [ ] Task 6: Adapt `IndividualDiagramCarousel` for Mode 2 compact rendering (AC: #1)
-  - [ ] 6.1 The `IndividualDiagramCarousel` component (created in Story 5.2) must accept a `mode` prop: `'full'` (Mode 1) or `'compact'` (Mode 2)
-  - [ ] 6.2 In compact mode: arrows shrink to 28px, label font 14px, sublabel font 12px, no "Compare with Synthesis" button, DiagramCanvas fills the panel width
-  - [ ] 6.3 In compact mode: accept `highlightedStepId` prop and apply teal glow to the matching node in the rendered Mermaid SVG
-  - [ ] 6.4 In compact mode: accept `carouselIndex` as a controlled prop (parent-driven navigation for divergence clicks) while still allowing manual left/right navigation
-  - [ ] 6.5 Header compact layout: `< Janet Park (3/3) >` with `Ogden, UT` and step count as sublabel
+- [x] Task 6: Adapt `IndividualDiagramCarousel` for Mode 2 compact rendering (AC: #1)
+  - [x] 6.1 The `IndividualDiagramCarousel` component (created in Story 5.2) must accept a `mode` prop: `'full'` (Mode 1) or `'compact'` (Mode 2)
+  - [x] 6.2 In compact mode: arrows shrink to 28px, label font 14px, sublabel font 12px, no "Compare with Synthesis" button, DiagramCanvas fills the panel width
+  - [x] 6.3 In compact mode: accept `highlightedStepId` prop and apply teal glow to the matching node in the rendered Mermaid SVG
+  - [x] 6.4 In compact mode: accept `carouselIndex` as a controlled prop (parent-driven navigation for divergence clicks) while still allowing manual left/right navigation
+  - [x] 6.5 Header compact layout: `< Janet Park (3/3) >` with `Ogden, UT` and step count as sublabel
 
-- [ ] Task 7: Wire up `src/app/review/page.tsx` to fetch data and render the comparison view (AC: #1-#9)
-  - [ ] 7.1 Make `src/app/review/page.tsx` a Server Component that fetches synthesis data and individual schemas via `GET /api/synthesis/[nodeId]` (the seeded leaf node ID)
-  - [ ] 7.2 The page must check for an authenticated supervisor session — redirect to `/auth/login` if unauthenticated
-  - [ ] 7.3 Pass fetched data down to the `ComparisonView` client component
-  - [ ] 7.4 Create `src/app/review/loading.tsx` skeleton: layout matches the final page structure with grey placeholder shapes for the carousel area
-  - [ ] 7.5 Handle error states: if synthesis data not found, show a centered message "No synthesis results available yet"
-  - [ ] 7.6 Include the supervisor top bar (brand icon + app name + project name on left, user name on right) — can be a simple `<header>` element or a separate small component
+- [x] Task 7: Wire up `src/app/review/page.tsx` to fetch data and render the comparison view (AC: #1-#9)
+  - [x] 7.1 Make `src/app/review/page.tsx` a Server Component that fetches synthesis data and individual schemas via `GET /api/synthesis/[nodeId]` (the seeded leaf node ID)
+  - [x] 7.2 The page must check for an authenticated supervisor session — redirect to `/auth/login` if unauthenticated
+  - [x] 7.3 Pass fetched data down to the `ComparisonView` client component
+  - [x] 7.4 Create `src/app/review/loading.tsx` skeleton: layout matches the final page structure with grey placeholder shapes for the carousel area
+  - [x] 7.5 Handle error states: if synthesis data not found, show a centered message "No synthesis results available yet"
+  - [x] 7.6 Include the supervisor top bar (brand icon + app name + project name on left, user name on right) — can be a simple `<header>` element or a separate small component
 
-- [ ] Task 8: Create tests (AC: #1-#9)
-  - [ ] 8.1 Create `src/components/supervisor/comparison-view.test.tsx`:
+- [x] Task 8: Create tests (AC: #1-#9)
+  - [x] 8.1 Create `src/components/supervisor/comparison-view.test.tsx`:
     - Test Mode 1 renders full-width carousel with "Compare with Synthesis" button
     - Test clicking "Compare with Synthesis" transitions to Mode 2 split-screen
     - Test clicking "Back to Individual Review" returns to Mode 1
     - Test "Compare with Synthesis" button is hidden when viewport < 1200px
     - Test auto-revert from Mode 2 to Mode 1 when viewport shrinks below 1200px
-  - [ ] 8.2 Create `src/components/supervisor/divergence-annotation.test.tsx`:
+  - [x] 8.2 Create `src/components/supervisor/divergence-annotation.test.tsx`:
     - Test `DivergenceBadge` renders correct label and color for each type (genuinely_unique, sequence_conflict, uncertain)
     - Test badge click calls `onClick` with divergence data
     - Test Enter keypress on badge triggers `onClick`
     - Test `DivergenceDetailCard` renders explanation text, source tags, and confidence level
     - Test detail card has 3px teal left border
-  - [ ] 8.3 Create `src/components/supervisor/individual-diagram-carousel.test.tsx` (extend from Story 5.2 tests):
+  - [x] 8.3 Create `src/components/supervisor/individual-diagram-carousel.test.tsx` (extend from Story 5.2 tests):
     - Test compact mode renders smaller arrows and fonts
     - Test `highlightedStepId` prop applies teal glow to the correct node
     - Test controlled `carouselIndex` prop navigates to the correct slide
-  - [ ] 8.4 Mock `DiagramCanvas` in tests since Mermaid.js requires a DOM — render tests focus on the surrounding logic, not Mermaid rendering
+  - [x] 8.4 Mock `DiagramCanvas` in tests since Mermaid.js requires a DOM — render tests focus on the surrounding logic, not Mermaid rendering
 
 ## Dev Notes
 
@@ -299,11 +299,49 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+- Fixed matchMedia mock: jsdom doesn't define window.matchMedia; used direct assignment instead of vi.spyOn
+- Fixed ResizeObserver polyfill: jsdom doesn't provide ResizeObserver; added polyfill in test file
+- Fixed multiple-element match: getAllByText instead of getByText for names that appear in both header and aria-live region
 
 ### Completion Notes List
+- Task 1: Created ComparisonView with Mode 1/Mode 2 toggle, viewport detection, CSS slide animation, local state management
+- Task 2: Created DivergenceBadge with three color variants (genuinely_unique, sequence_conflict, uncertain_needs_review), keyboard support
+- Task 3: Created DivergenceDetailCard with teal left border, confidence display, source tags with "Not mentioned" labels
+- Task 4: Created SynthesisPanel with DiagramCanvas integration, SVG-based badge overlay positioning with ResizeObserver, fallback rendering
+- Task 5: Wired divergence click-to-navigate in ComparisonView — updates carouselIndex, highlightedStepId, selectedDivergenceId; clears on manual navigation
+- Task 6: Extended IndividualDiagramCarousel with mode prop (full/compact), controlledIndex, onIndexChange, highlightedStepId, showCompareButton
+- Task 7: Updated page.tsx to fetch synthesis + individual schemas from DB queries; updated review-content.tsx to render ComparisonView or fallback
+- Task 8: Created 31 tests across 3 test files covering all ACs. Adapted actual DivergenceAnnotation schema (divergenceType field, uncertain_needs_review enum)
 
 ### Change Log
+- Story 5.3 implementation complete — Mode 2 split-screen comparison view with divergence navigation (Date: 2026-04-09)
 
 ### File List
+- src/components/supervisor/comparison-view.tsx (new)
+- src/components/supervisor/divergence-annotation.tsx (new)
+- src/components/supervisor/synthesis-panel.tsx (new)
+- src/components/supervisor/comparison-view.test.tsx (new)
+- src/components/supervisor/divergence-annotation.test.tsx (new)
+- src/components/supervisor/individual-diagram-carousel.tsx (modified)
+- src/components/supervisor/individual-diagram-carousel.test.tsx (modified)
+- src/app/review/page.tsx (modified)
+- src/app/review/review-content.tsx (modified)
+
+### Review Findings
+
+- [x] [Review][Patch] CSS injection via unsanitized `highlightedStepId`/`stepId` interpolated into `<style>` tags and `querySelector` selectors — added `/^[\w-]+$/` guard [individual-diagram-carousel.tsx:192, synthesis-panel.tsx:51] ✔ fixed
+- [x] [Review][Patch] Unsafe `as` type casts on JSONB fields (`workflowJson`, `mermaidDefinition`) with no runtime validation — added null-coalescing fallbacks [page.tsx:50-51, page.tsx:66] ✔ fixed
+- [x] [Review][Patch] `validatedAt` hardcoded to `null` in slide construction — now passes `schema.updatedAt` through IndividualSchema [review-content.tsx:43, comparison-view.tsx:115, page.tsx:66] ✔ fixed
+- [x] [Review][Patch] Header format missing location in full mode — added "Name — Location (1/3)" format with em-dash [individual-diagram-carousel.tsx:128-134] ✔ fixed
+- [x] [Review][Patch] Mode 2 transition uses CSS `animation` (keyframes) instead of CSS `transition` per spec — replaced with CSS transition property [comparison-view.tsx:138-140] ✔ fixed
+- [x] [Review][Patch] Highlight uses `filter: drop-shadow` instead of spec'd `box-shadow` — changed to `box-shadow: 0 0 0 3px rgba(13,148,136,0.25)` [individual-diagram-carousel.tsx:196] ✔ fixed
+- [x] [Review][Patch] `response.json()` in login form can throw SyntaxError on non-JSON response — wrapped in try/catch [login-form.tsx:26] ✔ fixed
+- [x] [Review][Patch] Redundant `role="button"` on `<button>` element in DivergenceBadge — removed [divergence-annotation.tsx:37] ✔ fixed
+- [x] [Review][Defer] `getProjectForSupervisor` uses `.limit(1)` with no ORDER BY — non-deterministic for multi-project supervisors [queries.ts:471] — deferred, MVP scope assumes single project per supervisor
+- [x] [Review][Defer] `getLeafNodeForProject` uses `findFirst` with no ordering — non-deterministic for multi-leaf projects [queries.ts:476] — deferred, MVP scope assumes single leaf node
+- [x] [Review][Defer] Swallowed errors in API routes — bare `catch {}` with no server-side logging [interviews/route.ts:43, project/route.ts:27] — deferred, pre-existing pattern
+- [x] [Review][Defer] No CSRF token on login form — JSON content-type provides implicit protection [login-form.tsx] — deferred, pre-existing auth design
+- [x] [Review][Defer] Duplicate auth in middleware + page — supervisor with no project redirected to login instead of meaningful error [page.tsx:30, middleware.ts] — deferred, edge case in MVP

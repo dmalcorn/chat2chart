@@ -1,6 +1,6 @@
 # Story 5.1: Supervisor Authentication & Login Page
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -21,47 +21,29 @@ So that I can access the review interface for my project.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement `/review` page redirect logic (AC: #1)
-  - [ ] 1.1 Update `src/app/review/page.tsx` — make it a Server Component that checks for a valid session by calling `getSessionFromRequest()` via the `cookies()` / `headers()` API (or use Next.js middleware). If no valid session, redirect to `/auth/login` using `redirect()` from `next/navigation`
-  - [ ] 1.2 If session exists but role is not `supervisor`, also redirect to `/auth/login`
+- [x] Task 1: Implement `/review` page redirect logic (AC: #1)
+  - [x] 1.1 Update `src/app/review/page.tsx` — Server Component checks session via `cookies()` + `validateSession()`, redirects to `/auth/login` if no session
+  - [x] 1.2 If session exists but role is not `supervisor`, also redirect to `/auth/login`
 
-- [ ] Task 2: Build the login page UI at `src/app/auth/login/page.tsx` (AC: #1, #4, #5, #6)
-  - [ ] 2.1 Replace the placeholder content with a `"use client"` login form component (either inline or extracted to `src/components/auth/login-form.tsx`)
-  - [ ] 2.2 Render a centered card (use `--card` / `--card-foreground` tokens) with:
-    - Email `<input type="email">` with label "Email"
-    - Password `<input type="password">` with label "Password"
-    - Helper text below password: "This is a project-specific password..." in `muted-foreground`
-    - "Sign In" primary button using the existing `Button` component from `src/components/ui/button.tsx` with `variant="default"` (maps to `--primary`)
-  - [ ] 2.3 Form submits via `fetch('POST', '/api/auth/login')` with `{ email, password }` JSON body
-  - [ ] 2.4 On success (200), redirect to `/review` using `router.push('/review')` from `next/navigation`
-  - [ ] 2.5 On error (400/403/500), display the error message from `response.error.message` inline below the form — no alerts, no modals, no toasts
-  - [ ] 2.6 Enter key submits the form (native `<form>` + `<button type="submit">` behavior)
-  - [ ] 2.7 No "remember me" checkbox. No "forgot password" link. No OAuth buttons
-  - [ ] 2.8 Disable the "Sign In" button while the request is in flight (loading state). Re-enable on response
+- [x] Task 2: Build the login page UI at `src/app/auth/login/page.tsx` (AC: #1, #4, #5, #6)
+  - [x] 2.1 Extracted to `src/components/auth/login-form.tsx` as `"use client"` component
+  - [x] 2.2 Centered card with Email/Password inputs, helper text, Sign In button
+  - [x] 2.3 Form submits via `fetch('POST', '/api/auth/login')` with JSON body
+  - [x] 2.4 On success, redirects to `/review` via `router.push`
+  - [x] 2.5 On error, displays inline error message below form
+  - [x] 2.6 Enter key submits via native `<form>` + `<button type="submit">`
+  - [x] 2.7 No "remember me", no "forgot password", no OAuth
+  - [x] 2.8 Button disabled with "Signing in..." text during request
 
-- [ ] Task 3: Verify API routes are complete and correct (AC: #2, #3, #7)
-  - [ ] 3.1 Verify `POST /api/auth/login` (`src/app/api/auth/login/route.ts`) correctly validates email against both `SUPERVISOR_EMAIL_ALLOWLIST` env var and `project_supervisors` table via `isEmailInSupervisorAllowlist()`, verifies password via `verifyPassword()` from `src/lib/auth/config.ts`, creates JWT session via `createSession()`, and sets httpOnly cookie via `setSessionCookie()`. This route already exists and appears complete — verify it matches all ACs, no modifications expected
-  - [ ] 3.2 Verify `POST /api/auth/logout` (`src/app/api/auth/logout/route.ts`) clears the session cookie via `clearSessionCookie()`. This route already exists and appears complete
-  - [ ] 3.3 Verify `GET /api/auth/session` (`src/app/api/auth/session/route.ts`) validates the current session and returns `{ data: { userId, email, role } }` or 401. This route already exists and appears complete
+- [x] Task 3: Verify API routes are complete and correct (AC: #2, #3, #7)
+  - [x] 3.1 POST /api/auth/login verified — complete and correct
+  - [x] 3.2 POST /api/auth/logout verified — complete and correct
+  - [x] 3.3 GET /api/auth/session verified — complete and correct
 
-- [ ] Task 4: Verify existing tests and add login page tests (AC: #1-#8)
-  - [ ] 4.1 Verify existing API route tests pass:
-    - `src/app/api/auth/login/route.test.ts` — 7 tests covering valid credentials, invalid body, malformed JSON, email not on allowlist, user not in DB, wrong password, DB allowlist check
-    - `src/app/api/auth/logout/route.test.ts` — 1 test for cookie clearing
-    - `src/app/api/auth/session/route.test.ts` — 3 tests for valid session, no cookie, invalid cookie
-  - [ ] 4.2 Create `src/app/auth/login/page.test.tsx` (or `login-form.test.tsx` if extracted):
-    - Test that email input, password input, and "Sign In" button render
-    - Test that helper text "This is a project-specific password..." is visible
-    - Test that no "remember me" or "forgot password" elements are present
-    - Test that submitting the form calls `POST /api/auth/login` with email and password
-    - Test that successful login redirects to `/review`
-    - Test that failed login displays inline error message below the form
-    - Test that button shows loading state during request
-    - Mock `fetch` for API calls, mock `next/navigation` for routing
-  - [ ] 4.3 Create `src/app/review/page.test.tsx`:
-    - Test that unauthenticated access redirects to `/auth/login`
-    - Test that non-supervisor role redirects to `/auth/login`
-    - Mock session validation functions
+- [x] Task 4: Verify existing tests and add login page tests (AC: #1-#8)
+  - [x] 4.1 Existing API route tests verified passing (7 login + 1 logout + 3 session)
+  - [x] 4.2 Created `src/components/auth/login-form.test.tsx` — 7 tests
+  - [x] 4.3 Created `src/app/review/page.test.tsx` — 3 tests
 
 ## Dev Notes
 
@@ -178,11 +160,27 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Debug Log References
+N/A
 
 ### Completion Notes List
+- All 3 existing API routes verified complete — no modifications needed
+- LoginForm extracted to `src/components/auth/login-form.tsx` for separation of concerns
+- 10 new tests added (7 login form + 3 review page redirect), all passing
+- Full suite: 624 tests, 64 files, 0 failures
 
 ### Change Log
+- Created `src/components/auth/login-form.tsx` — client login form component
+- Modified `src/app/auth/login/page.tsx` — replaced placeholder with LoginForm
+- Modified `src/app/review/page.tsx` — added session validation + redirect logic
+- Created `src/components/auth/login-form.test.tsx` — 7 tests
+- Created `src/app/review/page.test.tsx` — 3 tests
 
 ### File List
+- `src/components/auth/login-form.tsx` (new)
+- `src/components/auth/login-form.test.tsx` (new)
+- `src/app/auth/login/page.tsx` (modified)
+- `src/app/review/page.tsx` (modified)
+- `src/app/review/page.test.tsx` (new)

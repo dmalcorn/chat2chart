@@ -80,3 +80,11 @@
 - No concurrency guard on POST `/api/synthesis/[nodeId]` — parallel requests can trigger duplicate synthesis runs. `createSynthesisResultWithVersion` transaction prevents version collision, but wasted compute. Consider advisory lock or in-progress status check.
 - Step IDs not sanitized for Mermaid syntax injection [mermaid-generator.ts:106-111] — IDs are DB-generated UUIDs (controlled input). Revisit if user-editable IDs are added.
 - Fixed 1s retry delay in correlator [correlator.ts:52] — single retry with fixed delay. No thundering herd risk at MVP scale. Consider exponential backoff with jitter for production.
+
+## Deferred from: code review of Epic 5, stories 5.1–5.3 (2026-04-09)
+
+- `getProjectForSupervisor` uses `.limit(1)` with no ORDER BY — non-deterministic for multi-project supervisors [queries.ts:471]. MVP assumes single project per supervisor.
+- `getLeafNodeForProject` uses `findFirst` with no ordering — non-deterministic for multi-leaf projects [queries.ts:476]. MVP assumes single leaf node.
+- Swallowed errors in API routes — bare `catch {}` with no server-side logging [interviews/route.ts:43, project/route.ts:27]. Pre-existing pattern across all routes.
+- No CSRF token on login form — JSON content-type provides implicit protection [login-form.tsx]. Pre-existing auth design decision.
+- Duplicate auth in middleware + page.tsx — supervisor with valid session but no project gets redirected to login instead of a meaningful error [page.tsx:30, middleware.ts]. Edge case in MVP single-project setup.

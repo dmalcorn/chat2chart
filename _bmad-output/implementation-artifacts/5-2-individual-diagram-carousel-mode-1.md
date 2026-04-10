@@ -1,6 +1,6 @@
 # Story 5.2: Individual Diagram Carousel (Mode 1)
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -23,89 +23,35 @@ So that I can form my own impressions before seeing the synthesis.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `GET /api/review/interviews` API route (AC: #1, #6)
-  - [ ] 1.1 Create `src/app/api/review/interviews/route.ts` — a GET endpoint protected by `withSupervisorAuth` from `@/lib/auth/middleware`
-  - [ ] 1.2 The route queries all captured interviews for the project's leaf process node, along with their individual process schemas (including `schemaJson`, `mermaidDefinition`, `validationStatus`) and interview token data (for `intervieweeName`, `intervieweeRole`)
-  - [ ] 1.3 Add query function `getCapturedInterviewsWithSchemas(processNodeId: string)` to `src/lib/db/queries.ts` — joins `interviews` (status = 'captured'), `individualProcessSchemas`, and `interviewTokens` tables. Returns array of objects with interviewee name, role (used as location), validation date (`updatedAt` from schema), step count (derived from `schemaJson`), and `mermaidDefinition`
-  - [ ] 1.4 Return response wrapped per API standard: `{ data: InterviewSlide[], count: number }` where each `InterviewSlide` contains `intervieweeName`, `intervieweeRole`, `validatedAt` (ISO 8601), `stepCount`, `mermaidDefinition`, `schemaJson`
-  - [ ] 1.5 If no captured interviews found, return `{ data: [], count: 0 }` with HTTP 200
-  - [ ] 1.6 Wrap in try/catch — unexpected errors return `{ error: { message: "An unexpected error occurred", code: "INTERNAL_ERROR" } }` with HTTP 500
+- [x] Task 1: Create `GET /api/review/interviews` API route (AC: #1, #6)
+  - [x] 1.1-1.6 All implemented — protected route, query function, API standard response, error handling
 
-- [ ] Task 2: Create `GET /api/review/project` API route (AC: #9)
-  - [ ] 2.1 Create `src/app/api/review/project/route.ts` — a GET endpoint protected by `withSupervisorAuth`
-  - [ ] 2.2 Returns the project name and the supervisor's user info (name, email) from the session, for use in the top bar
-  - [ ] 2.3 Add query function `getProjectForSupervisor(userId: string)` to `src/lib/db/queries.ts` — queries `projectSupervisors` joined with `projects` to find the supervisor's project. Also queries `users` by `userId` for the supervisor name
-  - [ ] 2.4 Return response: `{ data: { projectName, supervisorName, supervisorEmail } }`
+- [x] Task 2: Create `GET /api/review/project` API route (AC: #9)
+  - [x] 2.1-2.4 All implemented — protected route, query function, returns project+supervisor info
 
-- [ ] Task 3: Create supervisor top bar component `src/components/shared/top-bar.tsx` (AC: #9)
-  - [ ] 3.1 Create a Server Component (no `"use client"`) that receives `projectName` and `supervisorName` as props
-  - [ ] 3.2 Layout: brand icon (placeholder SVG or text logo) + "chat2chart" app name + project name on the left side; user avatar (initial-based circle) + supervisor name on the right side
-  - [ ] 3.3 Not clickable — purely informational context (UX-DR18)
-  - [ ] 3.4 Style with Tailwind: fixed top, full width, max-width 1400px centered, border-bottom 1px, card background, z-index above content
+- [x] Task 3: Create supervisor top bar component (AC: #9)
+  - [x] 3.1-3.4 Server Component, brand icon + app name + project name, avatar initials, fixed top bar
 
-- [ ] Task 4: Create `DiagramCanvas` shared component `src/components/diagram/diagram-canvas.tsx` (AC: #5)
-  - [ ] 4.1 Create a `"use client"` component that wraps Mermaid.js rendering with pan/zoom controls
-  - [ ] 4.2 Dynamic import of Mermaid.js (no SSR) via `next/dynamic` or lazy `import()` inside a `useEffect`
-  - [ ] 4.3 Accept props: `mermaidDefinition: string`, `variant: 'individual-interview' | 'individual-carousel' | 'synthesis'`, `className?: string`
-  - [ ] 4.4 Pan: click-drag on the diagram area. Zoom: scroll wheel or +/- buttons. Fit: reset to show full diagram
-  - [ ] 4.5 Controls overlay absolute-positioned top-right: [+] [-] [Fit] buttons
-  - [ ] 4.6 Specs: card background (`bg-card`), radius 12px, shadow-sm (read-only context). Individual carousel variant: max-width 700px, no buttons below
-  - [ ] 4.7 Accessibility: `<details><summary>Text description</summary>` with structured text alternative. Pan/zoom controls keyboard-accessible (arrow keys for pan, +/- for zoom)
-  - [ ] 4.8 Create `src/hooks/use-mermaid.ts` hook that handles Mermaid.js initialization, rendering to a container ref, and cleanup. Returns `{ containerRef, isLoading, error }`
+- [x] Task 4: DiagramCanvas + useMermaid (AC: #5) — already existed from Story 3.6
+  - [x] 4.1-4.8 All already implemented with tests (8 DiagramCanvas tests + 5 useMermaid tests)
 
-- [ ] Task 5: Create `IndividualDiagramCarousel` component `src/components/supervisor/individual-diagram-carousel.tsx` (AC: #1, #2, #3, #4, #5, #6, #7, #8)
-  - [ ] 5.1 Create a `"use client"` component that manages carousel state with `useState` for current slide index
-  - [ ] 5.2 Accept props: `slides: InterviewSlide[]` (pre-fetched data array), `onCompareWithSynthesis: () => void` callback
-  - [ ] 5.3 Header: interviewee name + " — " + location (from `intervieweeRole`) + position indicator in parentheses, e.g., "Rachel Torres — Austin, TX (1/3)". Label: 16px, weight 600. Counter: 13px, muted-foreground
-  - [ ] 5.4 Sublabel: validation date formatted + " - " + step count + " steps", e.g., "Validated Apr 5, 2026 - 6 steps". Font: 13px, muted-foreground
-  - [ ] 5.5 Left/right arrow buttons: 36px circle, border, positioned on either side of the header. Disable left on first slide, disable right on last slide
-  - [ ] 5.6 Each slide renders a `DiagramCanvas` with variant `'individual-carousel'` and the slide's `mermaidDefinition`
-  - [ ] 5.7 Keyboard navigation: `useEffect` with `keydown` listener for ArrowLeft/ArrowRight. Clean up on unmount
-  - [ ] 5.8 Instant navigation: all slide data is already in the `slides` prop — switching index re-renders immediately, no fetch
-  - [ ] 5.9 "Compare with Synthesis" button below the carousel area — calls `onCompareWithSynthesis` prop. Styled as secondary/outline button
-  - [ ] 5.10 Accessibility: arrow key navigation, position announced to screen readers via `aria-live="polite"` region, focus indicators on arrow buttons (2px solid primary, 2px offset via `:focus-visible`)
+- [x] Task 5: Create IndividualDiagramCarousel component (AC: #1-#8)
+  - [x] 5.1-5.10 All implemented — carousel state, arrow navigation, keyboard nav, aria-live, Compare button
 
-- [ ] Task 6: Build the `/review` page `src/app/review/page.tsx` (AC: #1, #9, #10)
-  - [ ] 6.1 This is a Server Component. Validate the supervisor session server-side using `getSessionFromRequest` (or via Next.js middleware redirect to `/auth/login` if no session). For the MVP, use `cookies()` from `next/headers` to read session and validate
-  - [ ] 6.2 Fetch data server-side: call the query functions directly from the Server Component (NOT via fetch to API routes — Server Components can call DB queries directly through `src/lib/db/queries.ts`)
-  - [ ] 6.3 Fetch: `getCapturedInterviewsWithSchemas(processNodeId)` and project/supervisor info. The process node ID comes from the seeded leaf node — query the project's leaf node
-  - [ ] 6.4 Pass fetched data to client components: `<TopBar>` receives project name and supervisor name; `<IndividualDiagramCarousel>` receives the slides array
-  - [ ] 6.5 The `onCompareWithSynthesis` callback is a placeholder for Story 5.3 — for now, it can be a no-op or log to console
-  - [ ] 6.6 Layout: top bar at top, carousel content below with vertical centering in remaining viewport, max-width 1400px container
-  - [ ] 6.7 No editing controls, no approval buttons, no state transition triggers — viewing only (MVP10)
+- [x] Task 6: Build `/review` page (AC: #1, #9, #10)
+  - [x] 6.1-6.7 Server Component with session validation, direct DB queries, TopBar + carousel, no editing
 
-- [ ] Task 7: Create `src/app/review/loading.tsx` skeleton (AC: #1)
-  - [ ] 7.1 Skeleton layout matching the final page structure: top bar placeholder, header placeholder, diagram area placeholder
-  - [ ] 7.2 Use Tailwind `animate-pulse` on placeholder rectangles
+- [x] Task 7: Create loading skeleton (AC: #1)
+  - [x] 7.1-7.2 Skeleton with animate-pulse matching page structure
 
-- [ ] Task 8: Add Next.js middleware for supervisor auth redirect (AC: #1)
-  - [ ] 8.1 Create or update `src/middleware.ts` (Next.js root middleware) to check for a valid supervisor session cookie on `/review` routes
-  - [ ] 8.2 If no valid session, redirect to `/auth/login`
-  - [ ] 8.3 Use `matcher` config to apply only to `/review` paths
+- [x] Task 8: Add Next.js middleware (AC: #1)
+  - [x] 8.1-8.3 Root middleware at `src/middleware.ts`, matcher for `/review/:path*`
 
-- [ ] Task 9: Create tests (AC: #1-#10)
-  - [ ] 9.1 Create `src/app/api/review/interviews/route.test.ts`:
-    - Test authenticated request returns captured interviews with schemas
-    - Test unauthenticated request returns 401
-    - Test non-supervisor role returns 403
-    - Test empty result returns `{ data: [], count: 0 }`
-    - Mock query functions from `@/lib/db/queries` — NOT Drizzle directly
-  - [ ] 9.2 Create `src/components/supervisor/individual-diagram-carousel.test.tsx`:
-    - Test renders first interviewee name, location, position indicator
-    - Test renders sublabel with validation date and step count
-    - Test left arrow disabled on first slide
-    - Test right arrow disabled on last slide
-    - Test clicking right arrow advances to next slide
-    - Test ArrowLeft/ArrowRight keyboard navigation
-    - Test "Compare with Synthesis" button is visible and calls callback
-    - Mock DiagramCanvas as a simple div (no real Mermaid rendering in unit tests)
-  - [ ] 9.3 Create `src/components/shared/top-bar.test.tsx`:
-    - Test renders project name and supervisor name
-    - Test renders brand text/icon
-  - [ ] 9.4 Create `src/components/diagram/diagram-canvas.test.tsx`:
-    - Test renders container with correct max-width for carousel variant
-    - Test renders pan/zoom controls (+, -, Fit)
-    - Test individual-carousel variant does not render confirm/correct buttons
+- [x] Task 9: Create tests (AC: #1-#10)
+  - [x] 9.1 `src/app/api/review/interviews/route.test.ts` — 4 tests (auth, 403, data, empty)
+  - [x] 9.2 `src/components/supervisor/individual-diagram-carousel.test.tsx` — 7 tests
+  - [x] 9.3 `src/components/shared/top-bar.test.tsx` — 3 tests
+  - [x] 9.4 DiagramCanvas tests already existed — 8 tests covering carousel variant
 
 ## Dev Notes
 
@@ -247,11 +193,42 @@ Files **NOT modified** by this story:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Debug Log References
+N/A
 
 ### Completion Notes List
+- DiagramCanvas and useMermaid already existed from Story 3.6 — reused as-is
+- Added 3 new query functions to queries.ts: `getCapturedInterviewsWithSchemas`, `getProjectForSupervisor`, `getLeafNodeForProject`
+- Created `review-content.tsx` as client wrapper to bridge Server Component page to client carousel
+- `onCompareWithSynthesis` is a no-op placeholder for Story 5.3
+- 14 new tests added, all passing. Full suite: 624 tests, 64 files, 0 failures
 
 ### Change Log
+- Created `src/app/api/review/interviews/route.ts` — GET endpoint for captured interviews
+- Created `src/app/api/review/project/route.ts` — GET endpoint for project/supervisor info
+- Created `src/components/shared/top-bar.tsx` — supervisor top bar
+- Created `src/components/supervisor/individual-diagram-carousel.tsx` — Mode 1 carousel
+- Created `src/app/review/review-content.tsx` — client wrapper for carousel
+- Created `src/app/review/loading.tsx` — skeleton loading state
+- Created `src/middleware.ts` — Next.js auth middleware for /review routes
+- Modified `src/app/review/page.tsx` — full Server Component with data fetching
+- Modified `src/lib/db/queries.ts` — added 3 query functions
+- Created `src/app/api/review/interviews/route.test.ts` — 4 tests
+- Created `src/components/supervisor/individual-diagram-carousel.test.tsx` — 7 tests
+- Created `src/components/shared/top-bar.test.tsx` — 3 tests
 
 ### File List
+- `src/app/api/review/interviews/route.ts` (new)
+- `src/app/api/review/interviews/route.test.ts` (new)
+- `src/app/api/review/project/route.ts` (new)
+- `src/components/shared/top-bar.tsx` (new)
+- `src/components/shared/top-bar.test.tsx` (new)
+- `src/components/supervisor/individual-diagram-carousel.tsx` (new)
+- `src/components/supervisor/individual-diagram-carousel.test.tsx` (new)
+- `src/app/review/review-content.tsx` (new)
+- `src/app/review/loading.tsx` (new)
+- `src/middleware.ts` (new)
+- `src/app/review/page.tsx` (modified)
+- `src/lib/db/queries.ts` (modified)
