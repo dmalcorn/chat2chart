@@ -10,7 +10,7 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { withSupervisorAuth } from './middleware';
+import { withSupervisorAuth, withPMAuth } from './middleware';
 import { createSession, SessionPayload } from './session';
 
 function makeRequest(cookie?: string): NextRequest {
@@ -73,5 +73,49 @@ describe('withSupervisorAuth Middleware', () => {
     const wrapped = withSupervisorAuth(handler);
     await wrapped(makeRequest(`session=${token}`));
     expect(handler).toHaveBeenCalledOnce();
+  });
+});
+
+describe('withPMAuth Middleware', () => {
+  const mockHandler = vi.fn((_req: NextRequest, session: SessionPayload) =>
+    NextResponse.json({ data: { userId: session.userId } }),
+  );
+
+  it('returns 401 when no session cookie is present', async () => {
+    const wrapped = withPMAuth(mockHandler);
+    const response = await wrapped(makeRequest());
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
+    expect(body.error.message).toBe('Authentication required');
+  });
+
+  it('returns 403 when session role is supervisor', async () => {
+    const token = await createSession({
+      userId: 'sup-user',
+      email: 'supervisor@example.com',
+      role: 'supervisor',
+    });
+
+    const wrapped = withPMAuth(mockHandler);
+    const response = await wrapped(makeRequest(`session=${token}`));
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error.code).toBe('FORBIDDEN');
+  });
+
+  it('calls handler when session role is pm', async () => {
+    const token = await createSession({
+      userId: 'pm-user',
+      email: 'pm@example.com',
+      role: 'pm',
+    });
+
+    const wrapped = withPMAuth(mockHandler);
+    const response = await wrapped(makeRequest(`session=${token}`));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.userId).toBe('pm-user');
+    expect(mockHandler).toHaveBeenCalled();
   });
 });

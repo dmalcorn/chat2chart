@@ -554,6 +554,30 @@ export async function createInterviewToken(data: {
   return token;
 }
 
+// MVP: Single project — resolve the one project in the system
+// Future: Link PM to projects via a dedicated table
+export async function getProjectForPM() {
+  const result = await db.query.projects.findFirst();
+  return result ?? null;
+}
+
+export async function getInterviewTokensWithStatusByProject(projectId: string) {
+  const result = await db
+    .select({
+      id: interviewTokens.id,
+      token: interviewTokens.token,
+      intervieweeName: interviewTokens.intervieweeName,
+      intervieweeRole: interviewTokens.intervieweeRole,
+      createdAt: interviewTokens.createdAt,
+      interviewStatus: interviews.status,
+    })
+    .from(interviewTokens)
+    .leftJoin(interviews, eq(interviews.tokenId, interviewTokens.id))
+    .where(eq(interviewTokens.projectId, projectId))
+    .orderBy(desc(interviewTokens.createdAt));
+  return result;
+}
+
 export async function createStructuredCapture(data: {
   id: string;
   interviewId: string;

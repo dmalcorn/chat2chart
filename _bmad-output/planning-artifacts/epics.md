@@ -692,3 +692,96 @@ So that the demo runs smoothly end-to-end.
 **And** the demo flow works end-to-end: open Janet Park's pending link → consent → interview → diagram validation → switch to supervisor → carousel → comparison → divergence click
 **And** the fallback plan is verified: if live interview has issues, Janet's interview can be pre-seeded as a third completed interview
 **And** LLM error handling retries once with exponential backoff, then shows "The AI agent is temporarily unavailable"
+
+## Epic 7: Interview UX Fixes
+
+Post-deployment fixes and demo tooling discovered during live testing of the interview flow. These address gaps between the designed experience and the actual interviewee experience, plus operational needs for repeatable demos.
+
+### Story 7.1: Interview Completion Button & State Transition
+
+As an interviewee,
+I want an explicit "I'm finished" button visible during the conversation,
+So that I can signal when I've fully described my process instead of relying on the AI to detect it.
+
+**Acceptance Criteria:**
+
+**Given** an Active interview with at least 2 completed reflect-and-confirm cycles
+**When** I look at the input area
+**Then** a "I'm finished describing my process" button (or equivalent concise label) appears in the MicBar area, visually distinct from the recording controls (ghost/secondary style, not competing with the mic button)
+**And** the button is not shown before 2 completed cycles to prevent premature exits
+
+**Given** I click the "I'm finished" button
+**When** the system processes the completion
+**Then** the interview state transitions from `active` → `completed` via the state machine in `src/lib/synthesis/state-machine.ts`
+**And** the schema extraction pipeline triggers (Story 3.6 flow: NLP extraction → quality gate → diagram generation)
+**And** the UI transitions to the DiagramReview screen (FR83) where I validate my personal diagram
+**And** the completion is persisted server-side so a page refresh shows the correct post-interview state
+
+**Given** the AI agent detects conversational completion (interviewee says "that's everything" or similar)
+**When** the agent's response signals completion
+**Then** the system treats this equivalently to clicking the button — triggers the same state transition and extraction pipeline
+**And** both paths (button click and conversational detection) use the same completion handler to avoid divergent behavior
+
+**Technical Notes:**
+- Completion endpoint: `POST /api/interview/[token]/complete` — transitions state and triggers extraction
+- The MicBar component (`src/components/interview/mic-bar.tsx`) needs the new button added alongside existing controls
+- The ConversationThread or InterviewFlowController must handle the transition to DiagramReview after completion
+- The message API (`src/app/api/interview/[token]/messages/route.ts`) should detect agent completion signals and return a `completion_suggested` flag in the SSE stream
+
+### Story 7.2: Reposition Voice Wave Animation to Input Area
+
+As an interviewee,
+I want the recording animation anchored near the input controls at the bottom of the screen,
+So that my visual focus stays in one place while I'm speaking.
+
+**Acceptance Criteria:**
+
+**Given** I am actively recording (mic is live)
+**When** the ActiveListeningState waveform displays
+**Then** the waveform animation renders inside or directly above the MicBar fixed footer area — not inline in the scrollable message thread
+**And** the waveform is visually coupled with the mic button and "Done" control so they feel like one unified recording interface
+**And** the "I'm hearing you..." status text and waveform bars remain visible without scrolling regardless of conversation length
+**And** the previous inline placement in the message thread is removed — no duplicate waveform
+
+**Given** I click "Done" to stop recording
+**When** recording ends
+**Then** the waveform animation disappears from the MicBar area
+**And** the "Processing your response..." indicator appears in the message thread as before (UX-DR4)
+
+**Technical Notes:**
+- The `ActiveListeningState` component (`src/components/interview/active-listening-state.tsx`) currently renders as a message-thread element in `ConversationThread`
+- Move its render location into the MicBar component (`src/components/interview/mic-bar.tsx`) or a new wrapper that overlays the fixed footer
+- The MicBar is `position: fixed; bottom: 0` — the waveform should integrate within this fixed region
+- Ensure the message thread padding-bottom (`pb-[120px]`) is adjusted if the MicBar height changes during recording
+
+### Story 7.3: PM Admin Page for Demo Interview Link Generation
+
+As a PM (demo presenter),
+I want a simple admin page where I can generate new interview links on demand,
+So that I can repeat the live interview demo multiple times without running seed scripts.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as a PM
+**When** I navigate to `/admin`
+**Then** I see my project's leaf process node and a form to generate a new interview link
+
+**Given** I fill in an interviewee name (and optional role)
+**When** I click "Generate Link"
+**Then** a new interview token is created for the project's leaf node, and the full interview URL is displayed with a copy-to-clipboard button
+
+**Given** a new token is generated
+**When** I look at the admin page
+**Then** I see a list of all existing tokens for my project with their status (pending, active, completed, captured) and interviewee name
+
+**Given** I am not logged in or not a PM
+**When** I try to access `/admin` or the token generation API
+**Then** I am redirected to login or receive a 403
+
+**Technical Notes:**
+- New middleware: `withPMAuth` in `src/lib/auth/middleware.ts` (same pattern as `withSupervisorAuth`, checks `role === 'pm'`)
+- New API route: `POST /api/admin/interview-tokens` — PM-gated, calls existing `createInterviewToken()` from `src/lib/db/queries.ts`
+- New API route: `GET /api/admin/interview-tokens` — PM-gated, lists tokens with interview status for the PM's project
+- New page: `src/app/admin/page.tsx` — Server Component with PM session check, client island for form + copy button
+- Token generated via `crypto.randomUUID()` (UUID v4, matches existing token format)
+- Reuses existing `createInterviewToken()` query and `getLeafNodeForProject()` query
