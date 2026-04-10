@@ -13,9 +13,9 @@ export const SEED_SKILL_PROVIDER_ID = '00000000-0000-4000-a000-000000000006';
 export const SEED_TOKEN_RACHEL_ID = '00000000-0000-4000-a000-000000000010';
 export const SEED_TOKEN_MARCUS_ID = '00000000-0000-4000-a000-000000000011';
 export const SEED_TOKEN_JANET_ID = '00000000-0000-4000-a000-000000000012';
-export const SEED_TOKEN_RACHEL = 'demo-rachel-torres-token';
-export const SEED_TOKEN_MARCUS = 'demo-marcus-williams-token';
-export const SEED_TOKEN_JANET = 'demo-janet-park-token';
+export const SEED_TOKEN_RACHEL = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+export const SEED_TOKEN_MARCUS = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
+export const SEED_TOKEN_JANET = 'df7ea69a-b44c-4ed8-ad19-7a538ebe38c5';
 
 // --- Story 6.2: Interviews ---
 export const SEED_INTERVIEW_RACHEL_ID = '00000000-0000-4000-a000-000000000020';
