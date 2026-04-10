@@ -63,7 +63,7 @@ const mockActiveInterview = {
   tokenId: 'token-row-id-123',
   projectId: 'project-id-123',
   processNodeId: 'node-id-123',
-  status: 'active',
+  status: 'active' as const,
   llmProvider: null,
   sttProvider: null,
   startedAt: new Date(),
@@ -96,7 +96,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Review the budget request',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
       {
         id: 'ex-2',
@@ -108,7 +107,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Forward to supervisor',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
     ]);
 
@@ -119,7 +117,7 @@ describe('POST /api/interview/[token]/complete', () => {
       steps: [],
       connections: [],
       metadata: {
-        extractionMethod: 'programmatic',
+        extractionMethod: 'programmatic' as const,
         extractedAt: new Date().toISOString(),
         stepCount: 1,
         decisionPointCount: 0,
@@ -170,7 +168,7 @@ describe('POST /api/interview/[token]/complete', () => {
     vi.mocked(getInterviewTokenByToken).mockResolvedValue(mockTokenRow);
     vi.mocked(getInterviewByTokenId).mockResolvedValue({
       ...mockActiveInterview,
-      status: 'completed',
+      status: 'completed' as const,
     });
 
     const request = new Request('http://localhost/api/interview/' + VALID_TOKEN + '/complete', {
@@ -224,7 +222,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Step one',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
       {
         id: 'ex-2',
@@ -236,7 +233,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Step two',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
     ]);
     vi.mocked(extractProcessSchema).mockRejectedValue(new Error('Extraction failed'));
@@ -279,7 +275,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Step one',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
       {
         id: 'ex-2',
@@ -291,7 +286,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Step two',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
     ]);
 
@@ -325,7 +319,6 @@ describe('POST /api/interview/[token]/complete', () => {
         content: 'Only one step',
         isVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
     ]);
 

@@ -98,3 +98,11 @@
 
 - Completion success path untested (`window.location.reload`) — Story 7.1 scope. The `handleComplete` success branch calls `window.location.reload()` with no test coverage; all test mocks return `{ success: false }`.
 - `window.location.reload()` vs Next.js `router.refresh()` — Story 7.1 scope. Full page reload is heavy-handed; `router.refresh()` would re-render server components without losing client state in other parts of the page.
+
+## Deferred from: code review of story 7-3 (2026-04-09)
+
+- `getProjectForPM` ignores `userId` — queries single project with no user scoping. Spec-allowed MVP shortcut (Task 3.2). Must add user scoping for multi-tenant.
+- URL constructed from request `origin`/`host` headers (spoofable) — spec prescribes this approach. Consider server-side env var for production.
+- `handleComplete` stale-closure race in conversation-thread — Story 7.1 scope. `completionTriggeredRef` reset + React batching leaves a timing window for double-trigger from agent SSE.
+- `aria-live="polite"` redundant on `role="status"` mic-bar waveform — Story 7.2 scope. Noisy for screen readers on repeated record/stop cycles.
+- No leaf node → admin page renders but every POST fails 404 — MVP seeds leaf node. Surface a warning if `getLeafNodeForProject` returns null.

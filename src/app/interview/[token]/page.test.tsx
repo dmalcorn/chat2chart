@@ -148,7 +148,7 @@ describe('InterviewPage', () => {
     expect(getNestedComponentName(result as React.JSX.Element)).toBe('ActiveInterviewPlaceholder');
   });
 
-  it('renders completed view placeholder for completed state', async () => {
+  it('renders DiagramReview for completed state when interview exists', async () => {
     vi.mocked(validateTokenFormat).mockReturnValue(true);
     vi.mocked(getInterviewTokenByToken).mockResolvedValue(mockTokenRow);
     vi.mocked(getInterviewByTokenId).mockResolvedValue(makeInterview('completed'));
@@ -157,8 +157,7 @@ describe('InterviewPage', () => {
 
     const result = await InterviewPage({ params: makeParams(VALID_TOKEN) });
     const inner = getNestedComponentName(result as React.JSX.Element);
-    expect(inner).toBe('CompletedViewPlaceholder');
-    expect((result as React.JSX.Element).props.children.props.interviewState).toBe('completed');
+    expect(inner).toBe('DiagramReview');
   });
 
   it('renders completed view placeholder for captured state', async () => {
@@ -174,7 +173,7 @@ describe('InterviewPage', () => {
     expect((result as React.JSX.Element).props.children.props.interviewState).toBe('captured');
   });
 
-  it('renders active interview placeholder for validating state', async () => {
+  it('renders DiagramReview for validating state when interview exists', async () => {
     vi.mocked(validateTokenFormat).mockReturnValue(true);
     vi.mocked(getInterviewTokenByToken).mockResolvedValue(mockTokenRow);
     vi.mocked(getInterviewByTokenId).mockResolvedValue(makeInterview('validating'));
@@ -182,7 +181,7 @@ describe('InterviewPage', () => {
     vi.mocked(getProcessNodeById).mockResolvedValue(mockProcessNode);
 
     const result = await InterviewPage({ params: makeParams(VALID_TOKEN) });
-    expect(getNestedComponentName(result as React.JSX.Element)).toBe('ActiveInterviewPlaceholder');
+    expect(getNestedComponentName(result as React.JSX.Element)).toBe('DiagramReview');
   });
 
   it('renders invalid token screen for unexpected interview status', async () => {
