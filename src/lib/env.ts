@@ -17,12 +17,17 @@ function validateEnv(): Env {
   return result.data;
 }
 
-// Lazy validation — only runs when env is first accessed at runtime,
-// not at import time during next build
+// During `next build` in Docker, env vars aren't available.
+// Skip validation and return raw process.env so the build succeeds.
+// At runtime (when DATABASE_URL exists), validate once on first access.
 let _env: Env | undefined;
+
 export const env: Env = new Proxy({} as Env, {
   get(_target, prop: string) {
     if (!_env) {
+      if (!process.env.DATABASE_URL) {
+        return process.env[prop];
+      }
       _env = validateEnv();
     }
     return _env[prop as keyof Env];
