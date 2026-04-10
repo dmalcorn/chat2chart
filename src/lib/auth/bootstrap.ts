@@ -24,13 +24,13 @@ async function linkSupervisorToAllProjects(userId: string): Promise<void> {
   }
 }
 
-export async function bootstrapAccounts(): Promise<void> {
+async function bootstrapSupervisor(): Promise<void> {
   const hasEmail = !!env.FIRST_SUPERVISOR_EMAIL;
   const hasPassword = !!env.FIRST_SUPERVISOR_PASSWORD;
 
   if (hasEmail !== hasPassword) {
     console.warn(
-      'Bootstrap: both FIRST_SUPERVISOR_EMAIL and FIRST_SUPERVISOR_PASSWORD must be set together. Skipping bootstrap.',
+      'Bootstrap: both FIRST_SUPERVISOR_EMAIL and FIRST_SUPERVISOR_PASSWORD must be set together. Skipping supervisor bootstrap.',
     );
     return;
   }
@@ -58,4 +58,43 @@ export async function bootstrapAccounts(): Promise<void> {
 
   console.log(`Bootstrapped supervisor account: ${email}`);
   await linkSupervisorToAllProjects(user.id);
+}
+
+async function bootstrapPM(): Promise<void> {
+  const hasEmail = !!env.FIRST_PM_EMAIL;
+  const hasPassword = !!env.FIRST_PM_PASSWORD;
+
+  if (hasEmail !== hasPassword) {
+    console.warn(
+      'Bootstrap: both FIRST_PM_EMAIL and FIRST_PM_PASSWORD must be set together. Skipping PM bootstrap.',
+    );
+    return;
+  }
+
+  if (!hasEmail) {
+    return;
+  }
+
+  const email = env.FIRST_PM_EMAIL!;
+  const password = env.FIRST_PM_PASSWORD!;
+  const existing = await getUserByEmail(email);
+
+  if (existing) {
+    console.log(`PM account already exists: ${email}`);
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  await createUser({
+    email,
+    passwordHash,
+    role: 'pm',
+  });
+
+  console.log(`Bootstrapped PM account: ${email}`);
+}
+
+export async function bootstrapAccounts(): Promise<void> {
+  await bootstrapSupervisor();
+  await bootstrapPM();
 }

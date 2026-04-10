@@ -6,8 +6,12 @@ import { createSession, setSessionCookie } from '@/lib/auth/session';
 import { getUserByEmail, isEmailInSupervisorAllowlist } from '@/lib/db/queries';
 
 function isOnEnvAllowlist(email: string): boolean {
-  if (!env.SUPERVISOR_EMAIL_ALLOWLIST) return false;
-  const allowed = env.SUPERVISOR_EMAIL_ALLOWLIST.split(',').map((e) => e.trim().toLowerCase());
+  const lists = [env.SUPERVISOR_EMAIL_ALLOWLIST, env.PM_EMAIL_ALLOWLIST].filter(Boolean);
+  if (lists.length === 0) return false;
+  const allowed = lists
+    .join(',')
+    .split(',')
+    .map((e) => e.trim().toLowerCase());
   return allowed.includes(email.toLowerCase());
 }
 

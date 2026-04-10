@@ -18,6 +18,12 @@ export const envSchema = z.object({
     .string()
     .min(8, 'FIRST_SUPERVISOR_PASSWORD must be at least 8 characters')
     .optional(),
+  PM_EMAIL_ALLOWLIST: z.string().default(''),
+  FIRST_PM_EMAIL: z.email().optional(),
+  FIRST_PM_PASSWORD: z
+    .string()
+    .min(8, 'FIRST_PM_PASSWORD must be at least 8 characters')
+    .optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
