@@ -36,7 +36,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/review');
+      router.push(body.data?.role === 'pm' ? '/admin' : '/review');
     } catch {
       setError('An unexpected error occurred');
     } finally {

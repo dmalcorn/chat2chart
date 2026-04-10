@@ -83,6 +83,27 @@ describe('LoginForm', () => {
     });
   });
 
+  it('redirects to /admin on successful PM login', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { role: 'pm' } }),
+    });
+
+    render(<LoginForm />);
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'pm@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'correct' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/admin');
+    });
+  });
+
   it('displays inline error message on failed login', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,

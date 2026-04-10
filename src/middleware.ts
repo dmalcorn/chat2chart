@@ -13,7 +13,12 @@ export async function middleware(request: NextRequest) {
   const session = await validateSession(sessionCookie.value);
   console.log(`Middleware: session valid=${!!session}, role=${session?.role}`);
 
-  if (!session || session.role !== 'supervisor') {
+  if (!session) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+
+  // /review requires supervisor; /admin requires pm (page-level check handles /admin auth)
+  if (request.nextUrl.pathname.startsWith('/review') && session.role !== 'supervisor') {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
