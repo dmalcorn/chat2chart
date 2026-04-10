@@ -12,6 +12,7 @@ import { CycleSeparator } from './cycle-separator';
 import { useInterviewStream } from './use-interview-stream';
 import { useAutoScroll } from './use-auto-scroll';
 import { useSpeechRecognition } from '@/lib/stt/use-speech-recognition';
+import { Button } from '@/components/ui/button';
 
 interface ConversationThreadProps {
   token: string;
@@ -109,7 +110,24 @@ export function ConversationThread({ token }: ConversationThreadProps) {
                 }}
                 role="alert"
               >
-                {msg.content}
+                <p>{msg.content}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    // Find the last speech_card before this error and resend
+                    const lastSpeech = messages
+                      .slice(0, i)
+                      .reverse()
+                      .find((m) => m.type === 'speech_card');
+                    if (lastSpeech) {
+                      sendMessage(lastSpeech.content);
+                    }
+                  }}
+                >
+                  Try Again
+                </Button>
               </div>
             </div>,
           );

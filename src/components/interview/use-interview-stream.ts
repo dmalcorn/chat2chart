@@ -173,7 +173,7 @@ export function useInterviewStream(token: string) {
             payload: {
               id: crypto.randomUUID(),
               type: 'system_error',
-              content: 'The assistant is temporarily unavailable. Trying again...',
+              content: 'The AI agent is temporarily unavailable.',
               segmentId: '',
               timestamp: new Date().toISOString(),
             },
@@ -296,8 +296,8 @@ export function useInterviewStream(token: string) {
           type: 'ADD_MESSAGE',
           payload: {
             id: crypto.randomUUID(),
-            type: 'agent_question',
-            content: 'The assistant is temporarily unavailable. Trying again...',
+            type: 'system_error',
+            content: 'The AI agent is temporarily unavailable.',
             segmentId: '',
             timestamp: new Date().toISOString(),
           },

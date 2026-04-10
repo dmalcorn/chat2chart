@@ -24,7 +24,7 @@ export function ViewportCheck({ children }: { children: ReactNode }) {
         <div className="text-center">
           <MonitorSmartphone className="mx-auto mb-4 h-12 w-12 text-amber-500" aria-hidden="true" />
           <p className="text-lg text-muted-foreground">
-            This experience requires a tablet or desktop screen
+            This experience works best on a desktop or laptop computer.
           </p>
         </div>
       </main>

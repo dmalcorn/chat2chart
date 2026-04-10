@@ -42,7 +42,7 @@ describe('ViewportCheck', () => {
 
     expect(screen.queryByTestId('child')).not.toBeInTheDocument();
     expect(
-      screen.getByText('This experience requires a tablet or desktop screen'),
+      screen.getByText('This experience works best on a desktop or laptop computer.'),
     ).toBeInTheDocument();
   });
 
