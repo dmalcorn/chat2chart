@@ -217,19 +217,12 @@ describe('MicBar', () => {
 
   describe('Waveform in MicBar', () => {
     it('renders waveform bars when mode is recording and isRecording is true', () => {
-      const { container } = render(
-        <MicBar {...defaultProps} mode="recording" isRecording={true} />,
-      );
+      render(<MicBar {...defaultProps} mode="recording" isRecording={true} />);
       const waveformSection = screen.getByRole('status');
       expect(waveformSection).toHaveAttribute('aria-label', 'Recording audio — waveform animation');
-      // Check 8 waveform bars are present
-      const ariaHiddenEls = container.querySelectorAll('[aria-hidden="true"]');
-      let barCount = 0;
-      ariaHiddenEls.forEach((el) => {
-        const children = el.querySelectorAll('div');
-        if (children.length === 8) barCount = 8;
-      });
-      expect(barCount).toBe(8);
+      // Check 8 waveform bars are present via data-testid
+      const barsContainer = screen.getByTestId('waveform-bars');
+      expect(barsContainer.children).toHaveLength(8);
     });
 
     it('does NOT render waveform in idle mode', () => {

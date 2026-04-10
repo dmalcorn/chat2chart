@@ -35,23 +35,29 @@ export function ConversationThread({ token }: ConversationThreadProps) {
   const completionTriggeredRef = useRef(false);
 
   // P4: Use ref for latest handleComplete to avoid stale closure in useEffect
-  const handleCompleteRef = useRef<() => Promise<void>>();
+  const handleCompleteRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   const handleComplete = useCallback(async () => {
+    if (isCompleting) return;
     setIsCompleting(true);
     setCompletionError(null);
-    const result = await completeInterview();
-    if (result.success) {
-      // Force a full page reload to let the server component re-render
-      // based on the updated interview status
-      window.location.reload();
-    } else {
+    try {
+      const result = await completeInterview();
+      if (result.success) {
+        // Force a full page reload to let the server component re-render
+        // based on the updated interview status
+        window.location.reload();
+      } else {
+        setCompletionError('Something went wrong completing the interview. Please try again.');
+        setIsCompleting(false);
+        completionTriggeredRef.current = false;
+      }
+    } catch {
       setCompletionError('Something went wrong completing the interview. Please try again.');
       setIsCompleting(false);
-      // P3: Reset so agent-driven completion can retry
       completionTriggeredRef.current = false;
     }
-  }, [completeInterview]);
+  }, [completeInterview, isCompleting]);
 
   handleCompleteRef.current = handleComplete;
 
@@ -204,7 +210,10 @@ export function ConversationThread({ token }: ConversationThreadProps) {
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"
-        style={{ paddingBottom: sttStatus === 'recording' ? '200px' : '120px' }}
+        style={{
+          paddingBottom: sttStatus === 'recording' ? '200px' : '120px',
+          transition: 'padding-bottom 200ms ease',
+        }}
       >
         <div className="mx-auto flex max-w-[800px] flex-col gap-4 p-4">
           {renderMessages()}

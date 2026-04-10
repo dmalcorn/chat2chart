@@ -178,14 +178,19 @@ export function MicBar({
 
   return (
     <div
-      className="fixed bottom-0 left-1/2 w-full max-w-[800px] -translate-x-1/2 border-t bg-card px-4 py-3"
-      style={{ borderColor: 'var(--border)' }}
+      className="fixed bottom-0 left-1/2 w-full max-w-[800px] -translate-x-1/2 border-t px-4 py-3 transition-colors duration-200"
+      style={{
+        borderColor: 'var(--border)',
+        backgroundColor:
+          mode === 'recording' && isRecording ? 'var(--success-soft)' : 'var(--card)',
+      }}
     >
       {/* Waveform section — above controls during recording */}
       {mode === 'recording' && isRecording && (
         <div
           role="status"
           aria-label="Recording audio — waveform animation"
+          aria-live="polite"
           className="mb-2 pb-2"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
@@ -207,7 +212,11 @@ export function MicBar({
               Words appear after Done
             </span>
           </div>
-          <div className="flex items-center justify-center gap-1" aria-hidden="true">
+          <div
+            className="flex items-center justify-center gap-1"
+            aria-hidden="true"
+            data-testid="waveform-bars"
+          >
             {Array.from({ length: WAVEFORM_BAR_COUNT }).map((_, i) => (
               <div
                 key={i}

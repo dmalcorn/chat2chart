@@ -93,3 +93,8 @@
 
 - TOCTOU race on concurrent completion requests — `transitionInterview` does read-then-write without atomic compare-and-swap. Two simultaneous POST `/complete` can both pass the status check. Pre-existing state machine design [src/lib/synthesis/state-machine.ts].
 - Zero verified exchanges produces degenerate schema — if interview completes with no confirmed summaries, extraction creates a single meaningless "Process step" that passes quality gate. Pre-existing extraction fallback behavior [src/lib/interview/schema-extractor.ts].
+
+## Deferred from: code review of story 7-2 (2026-04-09)
+
+- Completion success path untested (`window.location.reload`) — Story 7.1 scope. The `handleComplete` success branch calls `window.location.reload()` with no test coverage; all test mocks return `{ success: false }`.
+- `window.location.reload()` vs Next.js `router.refresh()` — Story 7.1 scope. Full page reload is heavy-handed; `router.refresh()` would re-render server components without losing client state in other parts of the page.
