@@ -1,10 +1,11 @@
 import { z } from 'zod/v4';
+import type { Env } from './env-schema';
 import { envSchema } from './env-schema';
 
 export { envSchema } from './env-schema';
 export type { Env } from './env-schema';
 
-function validateEnv() {
+function validateEnv(): Env {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -16,4 +17,14 @@ function validateEnv() {
   return result.data;
 }
 
-export const env = validateEnv();
+// Lazy validation — only runs when env is first accessed at runtime,
+// not at import time during next build
+let _env: Env | undefined;
+export const env: Env = new Proxy({} as Env, {
+  get(_target, prop: string) {
+    if (!_env) {
+      _env = validateEnv();
+    }
+    return _env[prop as keyof Env];
+  },
+});

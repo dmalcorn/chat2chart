@@ -7,7 +7,9 @@ import {
   interviewTokens,
   processNodes,
   projects,
+  projectSkillProviders,
   projectSupervisors,
+  structuredCaptures,
   synthesisCheckpoints,
   synthesisResults,
   users,
@@ -440,9 +442,124 @@ export async function getIntervieweeNamesByInterviewIds(
   return names;
 }
 
+export async function getCapturedInterviewsWithSchemas(processNodeId: string) {
+  const results = await db
+    .select({
+      intervieweeName: interviewTokens.intervieweeName,
+      intervieweeRole: interviewTokens.intervieweeRole,
+      schemaJson: individualProcessSchemas.schemaJson,
+      mermaidDefinition: individualProcessSchemas.mermaidDefinition,
+      validatedAt: individualProcessSchemas.updatedAt,
+    })
+    .from(interviews)
+    .innerJoin(interviewTokens, eq(interviews.tokenId, interviewTokens.id))
+    .innerJoin(individualProcessSchemas, eq(individualProcessSchemas.interviewId, interviews.id))
+    .where(and(eq(interviews.processNodeId, processNodeId), eq(interviews.status, 'captured')));
+  return results;
+}
+
+export async function getProjectForSupervisor(userId: string) {
+  const result = await db
+    .select({
+      projectId: projects.id,
+      projectName: projects.name,
+      supervisorName: users.name,
+      supervisorEmail: users.email,
+    })
+    .from(projectSupervisors)
+    .innerJoin(projects, eq(projectSupervisors.projectId, projects.id))
+    .innerJoin(users, eq(projectSupervisors.userId, users.id))
+    .where(eq(projectSupervisors.userId, userId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getLeafNodeForProject(projectId: string) {
+  const result = await db.query.processNodes.findFirst({
+    where: and(eq(processNodes.projectId, projectId), eq(processNodes.nodeType, 'leaf')),
+  });
+  return result ?? null;
+}
+
 export async function isSupervisorForProject(userId: string, projectId: string): Promise<boolean> {
   const result = await db.query.projectSupervisors.findFirst({
     where: and(eq(projectSupervisors.userId, userId), eq(projectSupervisors.projectId, projectId)),
   });
   return result !== undefined && result !== null;
+}
+
+// --- Seed / Admin Queries ---
+
+export async function getProjectByName(name: string) {
+  const result = await db.query.projects.findFirst({
+    where: eq(projects.name, name),
+  });
+  return result ?? null;
+}
+
+export async function createProject(data: {
+  id: string;
+  name: string;
+  description?: string;
+  skillName: string;
+  defaultLlmProvider: string;
+}) {
+  const [project] = await db.insert(projects).values(data).returning();
+  return project;
+}
+
+export async function createProcessNode(data: {
+  id: string;
+  projectId: string;
+  parentNodeId?: string | null;
+  name: string;
+  description?: string;
+  level: number;
+  nodeType: string;
+  sortOrder: number;
+}) {
+  const [node] = await db.insert(processNodes).values(data).returning();
+  return node;
+}
+
+export async function createProjectSupervisor(data: {
+  id: string;
+  projectId: string;
+  userId: string;
+}) {
+  const [ps] = await db.insert(projectSupervisors).values(data).returning();
+  return ps;
+}
+
+export async function createProjectSkillProvider(data: {
+  id: string;
+  projectId: string;
+  skillName: string;
+  providerName: string;
+  modelName: string;
+}) {
+  const [provider] = await db.insert(projectSkillProviders).values(data).returning();
+  return provider;
+}
+
+export async function createInterviewToken(data: {
+  id: string;
+  projectId: string;
+  processNodeId: string;
+  token: string;
+  intervieweeName: string;
+  intervieweeRole?: string;
+}) {
+  const [token] = await db.insert(interviewTokens).values(data).returning();
+  return token;
+}
+
+export async function createStructuredCapture(data: {
+  id: string;
+  interviewId: string;
+  processNodeId: string;
+  captureJson: unknown;
+}) {
+  const [capture] = await db.insert(structuredCaptures).values(data).returning();
+  return capture;
 }
